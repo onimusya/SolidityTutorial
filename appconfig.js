@@ -29,7 +29,7 @@ module.exports = {
     },
     build: {
         contracts: [
-            'FrancisToken.sol'
+            'FrancisToken.sol', 'FrancisTokenSale.sol'
         ]
     },
     settings: {

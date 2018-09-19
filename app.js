@@ -17,7 +17,7 @@ var contractAddress = '';
 
 
 // Retrieve the command line arguments
-var argv = require('minimist')(process.argv.slice(2));
+var argv = require('minimist')(process.argv.slice(2), { string: ['checkminter'] });
 
 
 var solcInput = {
@@ -282,6 +282,12 @@ if (typeof argv.deploy !== 'undefined') {
         if (!result) {
             return;
         }
+
+        // Update new nonce
+        //nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address);
+        nonce++;
+        nonceHex = web3.toHex(nonce);
+
     });
 
     return;
@@ -295,6 +301,7 @@ if (typeof argv.contractinfo !== 'undefined') {
         if (!result) {
             return;
         }
+
     });
 
     return;
@@ -354,5 +361,137 @@ if (typeof argv.mint !== 'undefined') {
 
     return;
 }
+
+if (typeof argv.tokensale !== 'undefined') {
+
+    // Francis Token Contract
+    let tokenSource = 'FrancisToken.sol';
+    let jsonTokenFilename = path.parse(tokenSource).name + '.json';
+    let jsonTokenFile = './build/contracts/' + jsonTokenFilename;
+
+    let tokenJsonContent = fs.readFileSync(jsonTokenFile, 'utf8');    
+    let tokenJsonOutput = JSON.parse(tokenJsonContent);
+
+    let tokenAbi = tokenJsonOutput['contracts'][tokenSource][path.parse(tokenSource).name]['abi'];
+    let tokenAddress = tokenJsonOutput['contracts'][tokenSource]['contractAddress'];
+    let tokenContract = web3.eth.contract(tokenAbi).at(tokenAddress);
+
+    // Francis Token Sale Contract
+    let tokenSaleSource = 'FrancisTokenSale.sol';
+    let jsonTokenSaleFilename = path.parse(tokenSaleSource).name + '.json';
+    let jsonTokenSaleFile = './build/contracts/' + jsonTokenSaleFilename;
+
+    let tokenSaleJsonContent = fs.readFileSync(jsonTokenSaleFile, 'utf8');    
+    let tokenSaleJsonOutput = JSON.parse(tokenSaleJsonContent);
+
+    let tokenSaleAbi = tokenSaleJsonOutput['contracts'][tokenSaleSource][path.parse(tokenSaleSource).name]['abi'];
+    let tokenSaleAddress = tokenSaleJsonOutput['contracts'][tokenSaleSource]['contractAddress'];
+    let tokenSaleContract = web3.eth.contract(tokenSaleAbi).at(tokenSaleAddress);
+
+
+    let privateKey = new Buffer(accounts[selectedAccountIndex].key, 'hex');
+
+    let result = false;
+
+    console.log('Token Contract Address: ' + tokenAddress);
+    console.log('Token Sale Contract Address: ' + tokenSaleAddress);
+
+    if (typeof argv.isminter !== 'undefined') {
+
+        // Check the token sale contract allow to mint token or not?
+        tokenSaleContract.isMinter( ( error, status) => {
+            if(!error) {
+                console.log(JSON.stringify(status));
+            } else {
+                console.error(error);            
+            }            
+        });
+        
+        //console.log('IsMinter() exit.');
+        return;
+    }
+
+    if (typeof argv.updatetokenaddress !== 'undefined') {
+        let solidityFunction = new SolidityFunction('', _.find(tokenSaleAbi, { name: 'setTokenAddress' }), '');
+        let payloadData = solidityFunction.toPayload([tokenAddress]).data;
+    
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: tokenSaleAddress,
+            from: accounts[selectedAccountIndex].address,
+            data: payloadData
+        };
+    
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
+            if (err) {
+                console.log('Error:');
+                console.log(err);
+            }
+            else {
+                console.log('Transaction receipt hash pending');
+                console.log(hash);
+            }
+        });
+    
+        return;
+    }
+
+    if (typeof argv.enableminter !== 'undefined') {
+
+        // Add Token Sale Contract as Minter
+        let solidityFunction = new SolidityFunction('', _.find(tokenAbi, { name: 'addMinter' }), '');
+        let payloadData = solidityFunction.toPayload([tokenSaleAddress]).data;
+    
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: tokenAddress,
+            from: accounts[selectedAccountIndex].address,
+            data: payloadData
+        };
+
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
+            if (err) {
+                console.log('Error:');
+                console.log(err);
+            }
+            else {
+                console.log('Transaction receipt hash pending');
+                console.log(hash);
+            }
+        });
+
+        return;
+    }
+
+    if (typeof argv.checkminter !== 'undefined') {
+
+        console.log ('Check Address: ' + argv.checkminter);
+
+        tokenContract.isMinter( argv.checkminter, ( error, status) => {
+            if(!error) {
+                console.log(JSON.stringify(status));
+            } else {
+                console.error(error);            
+            }            
+        });
+
+        return;
+    }
+    
+    return;
+}
+
 
 console.log('End here.');
