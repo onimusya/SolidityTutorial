@@ -1,7 +1,7 @@
 # Solidity Tutorial
 
 ## 1. Introduction
-First goal of this tutorial is to compile & deploy a mintable ERC20 token smart contract using client side signature with Web3 without truffle. It also has sample code to execute smart contract function by using sendRawTransaction().
+First goal of this tutorial is to compile & deploy a mintable ERC20 token smart contract using client side signature & Web3 without truffle. The ERC20 token contract is using Open Zeppelin Framework. It also has sample code to execute smart contract function by using sendRawTransaction().
 
 ## 2. Prerequisite
 - Node.js v8++
