@@ -1,11 +1,14 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "FrancisToken.sol";
 import "DateTime.sol";
 
 contract FrancisTokenSale is Ownable, DateTime {
  
+    using SafeMath for uint;
+
     FrancisToken private _token;
 
     struct PriceTier {
@@ -18,6 +21,10 @@ contract FrancisTokenSale is Ownable, DateTime {
     }
 
     PriceTier[] private _priceTiers;
+
+    event PurchaseToken(address indexed to, uint value, uint tokenAmount);
+    event Withdraw(address indexed to, uint value);
+
 
     constructor () public Ownable() {
 
@@ -97,4 +104,48 @@ contract FrancisTokenSale is Ownable, DateTime {
         return activeIndex_;
     }
     
+    function () public payable {
+        require (msg.value > 0);
+
+        _purchaseToken(msg.sender, msg.value);
+    }
+
+    function purchaseToken(address to_) public payable {
+        require (msg.value > 0);
+
+        _purchaseToken(to_, msg.value);
+    }
+
+    function _purchaseToken(address to_, uint value_) internal {
+        require (to_ != address(0) && value_ > 0);
+
+        uint index_ = getCurrentPriceTierIndex();
+        PriceTier storage priceTier_ = _priceTiers[index_];
+
+        // value_ is wei
+        uint tokenAmount_ = SafeMath.mul(priceTier_.tokenPrice, value_);
+        priceTier_.totalToken = priceTier_.totalToken.add(tokenAmount_);
+
+        require (priceTier_.maxSupply >= priceTier_.totalToken);
+
+        _token.mint(to_, tokenAmount_);
+        
+        emit PurchaseToken(to_, value_, tokenAmount_);
+
+    }
+
+    function getEtherBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function withdraw() public onlyOwner {
+        require (address(this).balance > 0);
+
+        uint withdrawAmount = address(this).balance;
+
+        msg.sender.transfer(withdrawAmount);
+
+        emit Withdraw(msg.sender, withdrawAmount);
+    }
+
 }

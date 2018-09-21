@@ -275,7 +275,7 @@ function contractInfo(contract) {
     let tokenContract = web3.eth.contract(abi).at(contractAddress);
     let tokenDecimals = tokenContract.decimals();
 
-    console.log('My wallet address: ' + accounts[selectedAccountIndex].address);
+    console.log('My wallet address: ' + accounts[selectedAccountIndex].address);    
     console.log('Token Name: ' + tokenContract.name.call());
     console.log('Token Symbol: ' + tokenContract.symbol());   
     console.log('Token Decimal: ' + tokenContract.decimals());   
@@ -334,6 +334,13 @@ if (typeof argv.deploy !== 'undefined') {
 
 if (typeof argv.contractinfo !== 'undefined') {
 
+    if (typeof argv.account !== 'undefined') {
+        selectedAccountIndex = argv.account;
+    }
+
+    let result = contractInfo('FrancisToken.sol');
+
+    /*
     let contracts = appConfig['build']['contracts'];
     contracts.forEach(contract => {
         let result = contractInfo(contract);
@@ -342,7 +349,7 @@ if (typeof argv.contractinfo !== 'undefined') {
         }
 
     });
-
+    */
     return;
 
 }
@@ -679,6 +686,88 @@ if (typeof argv.tokensale !== 'undefined') {
             }            
         });
 
+        return;
+
+    }
+
+    if (typeof argv.buytoken !== 'undefined') {
+        let accountIndex = selectedAccountIndex;
+
+        if (typeof argv.account !== 'undefined') {
+            accountIndex = argv.account;
+        }
+
+        let amountInWei = web3.toWei(argv.buytoken);
+        let amountInWeiHex = web3.toHex(amountInWei);
+
+        console.log('From Account: ' + accounts[accountIndex].address);
+        console.log('Buy Ether (Wei): ' + amountInWei);
+
+        nonce =  web3.eth.getTransactionCount(accounts[accountIndex].address);
+        nonceHex = web3.toHex(nonce);
+
+        privateKey = new Buffer(accounts[accountIndex].key, 'hex');        
+
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: tokenSaleAddress,
+            from: accounts[accountIndex].address,
+            value: amountInWeiHex
+        };
+    
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        let receipt = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+        console.log('Transaction Receipt: ' + receipt);
+        
+        return;
+    }
+
+    if (typeof argv.balance !== 'undefined') {
+        console.log('Token Sale Ether Balance: ' + (web3.eth.getBalance(tokenSaleAddress) / 1e18).toFixed(18));
+        return;
+    }
+
+    if (typeof argv.withdraw !== 'undefined') {
+
+        let accountIndex = selectedAccountIndex;
+
+        if (typeof argv.account !== 'undefined') {
+            accountIndex = argv.account;
+        }
+
+        nonce =  web3.eth.getTransactionCount(accounts[accountIndex].address);
+        nonceHex = web3.toHex(nonce);
+        privateKey = new Buffer(accounts[accountIndex].key, 'hex'); 
+        
+        console.log('Withdraw To Account: ' + accounts[accountIndex].address);
+        console.log('Withdraw Ether: ' + (web3.eth.getBalance(tokenSaleAddress) / 1e18).toFixed(18));
+        console.log('Nonce: ' + nonce);
+
+        let solidityFunction = new SolidityFunction('', _.find(tokenSaleAbi, { name: 'withdraw' }), '');
+        let payloadData = solidityFunction.toPayload([]).data;
+    
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: tokenSaleAddress,
+            from: accounts[accountIndex].address,
+            data: payloadData
+        };
+
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        let receipt = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+        console.log ('Transaction Receipt: ' + receipt);
+
+        return;
     }
     return;
 }
