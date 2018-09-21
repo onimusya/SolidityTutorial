@@ -9,6 +9,7 @@ const Tx = require('ethereumjs-tx');
 const SolidityFunction = require('web3/lib/web3/function');
 const appConfig = require('./appconfig');
 const _ = require('lodash');
+const md5File = require('md5-file')
 
 var accounts = appConfig['accounts'];
 var selectedHost = appConfig['networks'][ appConfig['settings']['selectedHost'] ];
@@ -61,13 +62,20 @@ var nonceHex = web3.toHex(nonce);
 function findImports(importFile) {
     console.log("Import File:" + importFile);
 
-    // Try to find it under node_modules folder
+    
     try {
-        result = fs.readFileSync("node_modules/" + importFile, 'utf8');
+        // Find in contracts folder first
+        result = fs.readFileSync("contracts/" + importFile, 'utf8');
         return { contents: result };
     } catch (error) {
-        console.log(error.message);
-        return { error: 'File not found' };
+        // Try to look into node_modules
+        try {
+            result = fs.readFileSync("node_modules/" + importFile, 'utf8');
+            return { contents: result };
+        } catch (error) {
+            console.log(error.message);
+            return { error: 'File not found' };
+        }    
     }
 
 }
@@ -90,14 +98,42 @@ function waitForTransactionReceipt(hash) {
 function buildContract(contract) {
     let contractFile = 'contracts/' + contract;
     let jsonOutputName = path.parse(contract).name + '.json';
+    let jsonOutputFile = './build/contracts/' + jsonOutputName;
     let result = false;
-
+    
     try {
         result = fs.statSync(contractFile);
     } catch (error) {
         console.log(error.message);
         return false;
     }
+
+    let contractFileChecksum = md5File.sync(contractFile);
+
+    try {
+        fs.statSync(jsonOutputFile);
+        
+        let jsonContent = fs.readFileSync(jsonOutputFile, 'utf8');
+        let jsonObject = JSON.parse(jsonContent);
+        let buildChecksum = '';
+        if (typeof jsonObject['contracts'][contract]['checksum'] != 'undefined') {
+            buildChecksum = jsonObject['contracts'][contract]['checksum'];
+
+            console.log('File Checksum: ' + contractFileChecksum);
+            console.log('Build Checksum: ' + buildChecksum);
+
+            if (contractFileChecksum === buildChecksum) {
+                console.log('No build is required due no change in file.');
+                console.log('==============================');
+                return true;
+            }
+        }
+
+    } catch (error) {
+        // Any file not found, will continue build
+    }
+
+    
 
     let contractContent = fs.readFileSync(contractFile, 'utf8');
 
@@ -127,6 +163,9 @@ function buildContract(contract) {
         console.log('Compile error!');
         return false;
     }        
+
+    // Update the sol file checksum
+    jsonOutput['contracts'][contract]['checksum'] = contractFileChecksum;
 
     let formattedJson = JSON.stringify(jsonOutput, null, 4);
 
@@ -396,6 +435,42 @@ if (typeof argv.tokensale !== 'undefined') {
     console.log('Token Contract Address: ' + tokenAddress);
     console.log('Token Sale Contract Address: ' + tokenSaleAddress);
 
+    function addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp) {
+
+        let solidityFunction = new SolidityFunction('', _.find(tokenSaleAbi, { name: 'addPriceTier' }), '');
+        let payloadData = solidityFunction.toPayload([tierTokenPrice, tierMaxSupply, tierTimestamp]).data;
+    
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: tokenSaleAddress,
+            from: accounts[selectedAccountIndex].address,
+            data: payloadData
+        };
+    
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        /*
+        web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
+            if (err) {
+                console.log('Error:');
+                console.log(err);
+            }
+            else {
+                console.log('Transaction receipt hash pending');
+                console.log(hash);
+            }
+        });        
+        */
+       let receipt = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+       console.log ('Transaction Receipt: ' + receipt);
+       
+       return receipt;
+    }
+
     if (typeof argv.isminter !== 'undefined') {
 
         // Check the token sale contract allow to mint token or not?
@@ -490,6 +565,121 @@ if (typeof argv.tokensale !== 'undefined') {
         return;
     }
     
+    if (typeof argv.addpricetier !== 'undefined') {
+
+        console.log('Add Price Tier -->');
+
+        let tierTimestamp = 0;
+        let tierTokenPrice = 0;
+        let tierMaxSupply = 0;
+
+        let tokenDecimals = tokenContract.decimals();
+        console.log('Token Decimals: ' + tokenDecimals);
+
+        if (typeof argv.date !== 'undefined') {
+            tierTimestamp = new Date(argv.date).getTime() / 1000;
+            console.log('Timestamp: ' + tierTimestamp);
+        }
+
+        if (typeof argv.tokenprice !== 'undefined') {
+            tierTokenPrice = argv.tokenprice;
+            console.log('Token Price: ' + tierTokenPrice);
+        }
+
+        if (typeof argv.maxsupply !== 'undefined') {
+            tierMaxSupply = argv.maxsupply * Math.pow(10, tokenDecimals);
+            console.log('Max Supply: ' + tierMaxSupply);
+        }
+
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+        return;
+    }
+
+    if (typeof argv.generatepricetiers !== 'undefined') {
+
+        console.log('Generate Price Tier -->');
+
+        let tokenDecimals = tokenContract.decimals();
+        let tierTokenPrice = 10;
+        let tierTimestamp = new Date('2018-09-20').getTime() / 1000;
+        let tierMaxSupply = 10000  * Math.pow(10, tokenDecimals);
+
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+        nonce++;
+        nonceHex = web3.toHex(nonce);
+        tierTokenPrice = 9;
+        tierTimestamp = new Date('2018-09-21').getTime() / 1000;
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+        nonce++;
+        nonceHex = web3.toHex(nonce);
+        tierTokenPrice = 8;
+        tierTimestamp = new Date('2018-09-22').getTime() / 1000;
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+        nonce++;
+        nonceHex = web3.toHex(nonce);
+        tierTokenPrice = 7;
+        tierTimestamp = new Date('2018-09-23').getTime() / 1000;
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+        nonce++;
+        nonceHex = web3.toHex(nonce);
+        tierTokenPrice = 6;
+        tierTimestamp = new Date('2018-09-24').getTime() / 1000;
+        addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
+
+    }
+
+    if (typeof argv.pricetierscount !== 'undefined') {
+        
+        tokenSaleContract.priceTiersCount( ( error, status) => {
+            if(!error) {
+                console.log ('Price Tier Count: ' + status);
+            } else {
+                console.error(error);            
+            }            
+        });
+
+        return;
+
+    }
+
+    if (typeof argv.getpricetier !== 'undefined') {
+
+        console.log('Get Price Tier -> ');
+        
+        tokenSaleContract.getPriceTier( argv.getpricetier, ( error, status) => {
+            if(!error) {
+                console.log(JSON.stringify(status));
+                let tierDate = new Date(status[3] * 1000);
+                console.log ('Tier Date: ' + tierDate.getUTCFullYear() + '-' 
+                    + (tierDate.getUTCMonth()+1) + '-' + tierDate.getUTCDate() + ' ' 
+                    + tierDate.getUTCHours() + ':' + tierDate.getUTCMinutes() + ':' + tierDate.getUTCSeconds());
+
+            } else {
+                console.error(error);            
+            }            
+        });
+
+        return;
+
+    }
+
+    if (typeof argv.getcurrentpricetierindex !== 'undefined') {
+        console.log('Get Current Price Tier Index -> ');
+
+        tokenSaleContract.getCurrentPriceTierIndex( ( error, status) => {
+            if(!error) {
+                console.log(JSON.stringify(status));
+            } else {
+                console.error(error);            
+            }            
+        });
+
+    }
     return;
 }
 

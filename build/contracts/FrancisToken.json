@@ -467,6 +467,7 @@
                     }
                 }
             },
+            "checksum": "3ca7d29d2a5d329b62101ea40d7f63f1",
             "contractAddress": "0x8cdaf0cd259887258bc13a92c0a6da92698644c0"
         },
         "openzeppelin-solidity/contracts/access/Roles.sol": {
