@@ -22,11 +22,138 @@ contract FrancisTokenSale is Ownable, DateTime {
 
     PriceTier[] private _priceTiers;
 
+    uint private _requireWhitelist;
+    
+    // uint is index, start with 1
+    mapping (address => uint) private _whitelist;
+    address[] private _whitelistAddress;
+
+    // uint is index, start with 1
+    mapping (address => uint) private _pendingWhitelist;
+    address[] private _pendingWhitelistAddress;
+
     event PurchaseToken(address indexed to, uint value, uint tokenAmount);
     event Withdraw(address indexed to, uint value);
 
+    event RequestWhitelist(address indexed addr);
+    event ApproveWhitelist(address indexed addr);
+    event RemovePendingWhitelist(address indexed addr);
+    event RemoveWhitelist(address indexed addr);
 
     constructor () public Ownable() {
+
+    }
+
+    function setRequireWhitelist(uint value_) public onlyOwner {
+        _requireWhitelist = value_;
+    }
+
+    function requestWhitelist() public {
+        require (_whitelist[msg.sender] == 0);
+
+        // Make sure the address not in pending list
+        require (_pendingWhitelist[msg.sender] == 0);
+
+        _pendingWhitelistAddress.push(msg.sender);
+        _pendingWhitelist[msg.sender] = _pendingWhitelistAddress.length;
+        
+        emit RequestWhitelist(msg.sender);
+    }
+
+    function getPendingWhitelistCount() public view onlyOwner returns (uint) {
+        return _pendingWhitelistAddress.length;
+    }
+
+    function getPendingWhitelist(uint index_) public view onlyOwner returns (address) {
+        require (index_ > 0);
+        require (index_ <= _pendingWhitelistAddress.length);
+
+        return _pendingWhitelistAddress[index_ - 1];
+    }
+
+    function getPendingWhitelistIndex(address addr_) public view onlyOwner returns (uint) {
+        require (addr_ != address(0));
+
+        return _pendingWhitelist[addr_];
+    }
+
+    function removePendingWhitelist(address addr_) public onlyOwner {
+        require (addr_ != address(0));
+        require (_pendingWhitelist[addr_] > 0);
+
+        uint index = _pendingWhitelist[addr_] - 1;
+
+        if (_pendingWhitelistAddress.length > (index + 1)) {
+            // Not the last record, move the last record to current location, then delete the last one
+            _pendingWhitelistAddress[index] = _pendingWhitelistAddress[_pendingWhitelistAddress.length - 1];
+        } 
+
+        // Save some gas
+        delete _pendingWhitelistAddress[_pendingWhitelistAddress.length - 1];
+        _pendingWhitelist[addr_] = 0;
+
+        emit RemovePendingWhitelist(addr_);
+    }
+
+    function getWhitelistCount() public view onlyOwner returns (uint) {
+        return _whitelistAddress.length;
+    }
+
+    function getWhitelist(uint index_) public view onlyOwner returns (address) {
+        require (index_ > 0);
+        require (index_ <= _whitelistAddress.length);
+
+        return _whitelistAddress[index_ - 1];
+    }
+
+    function getWhitelistIndex(address addr_) public view onlyOwner returns (uint) {
+        require (addr_ != address(0));
+
+        return _whitelist[addr_];
+    }
+
+    function removeWhitelist(address addr_) public onlyOwner {
+        require (addr_ != address(0));
+        require (_whitelist[addr_] > 0);
+
+        uint index = _whitelist[addr_] - 1;
+
+        if (_whitelistAddress.length > (index + 1)) {
+            // Not the last record, move the last record to current location, then delete the last one
+            _whitelistAddress[index] = _whitelistAddress[_whitelistAddress.length - 1];
+        } 
+
+        // Save some gas
+        delete _whitelistAddress[_whitelistAddress.length - 1];
+        _whitelist[addr_] = 0;
+
+        emit RemoveWhitelist(addr_);
+    }
+
+
+    function approveWhitelist(address addr_) public onlyOwner {
+        require (addr_ != address(0));
+
+        require (_pendingWhitelistAddress.length > 0);
+
+        require (_pendingWhitelist[addr_] != 0);
+
+        uint index = _pendingWhitelist[addr_] - 1;
+
+        if (_pendingWhitelistAddress.length > (index + 1)) {
+            // Not the last record, move the last record to current location, then delete the last one
+            _pendingWhitelistAddress[index] = _pendingWhitelistAddress[_pendingWhitelistAddress.length - 1];
+        } 
+
+        // Save some gas
+        delete _pendingWhitelistAddress[_pendingWhitelistAddress.length - 1];
+        _pendingWhitelist[addr_] = 0;
+
+        // Put in approval list
+        _whitelistAddress.push(addr_);
+        _whitelist[addr_] = _whitelistAddress.length;
+
+        emit ApproveWhitelist(addr_);
 
     }
 
@@ -118,6 +245,11 @@ contract FrancisTokenSale is Ownable, DateTime {
 
     function _purchaseToken(address to_, uint value_) internal {
         require (to_ != address(0) && value_ > 0);
+
+        if (_requireWhitelist != 0) {
+            // Make sure the address is in whitelist
+            require (_whitelist[to_] > 0);
+        }
 
         uint index_ = getCurrentPriceTierIndex();
         PriceTier storage priceTier_ = _priceTiers[index_];

@@ -180,7 +180,7 @@ function buildContract(contract) {
 function deployContract(contract) {
     let jsonOutputName = path.parse(contract).name + '.json';
     let jsonFile = './build/contracts/' + jsonOutputName;
-
+    let webJsonFile = './www/assets/contracts/' + jsonOutputName;
     let result = false;
 
     try {
@@ -240,11 +240,20 @@ function deployContract(contract) {
         // Update JSON
         jsonOutput['contracts'][contract]['contractAddress'] = receipt.contractAddress;
 
+        
+
+        let webJsonOutput = {
+            'abi': abi,
+            'contractAddress': receipt.contractAddress
+        };
+
         let formattedJson = JSON.stringify(jsonOutput, null, 4);
+        let formattedWebJson = JSON.stringify(webJsonOutput);
 
         //console.log(formattedJson);
         fs.writeFileSync(jsonFile, formattedJson);
-    
+        fs.writeFileSync(webJsonFile, formattedWebJson);
+
         console.log('==============================');
     
     });
