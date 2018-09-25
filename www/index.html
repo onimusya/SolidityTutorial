@@ -11,10 +11,11 @@
   <link rel="stylesheet" href="assets/vendors/bootstrap/dist/css/bootstrap.css">
   <link rel="stylesheet" href="assets/vendors/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="assets/vendors/Ionicons/css/ionicons.min.css">
-  
+  <link rel="stylesheet" href="assets/vendors/toastr/css/toastr.min.css">
+
   <link rel="stylesheet" href="assets/css/AdminLTE.min.css">
   <link rel="stylesheet" href="assets/css/skins/skin-blue.min.css">
-
+  
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -55,7 +56,7 @@
             </div>
             <div class="pull-left info">
               <p id="username">Anonymous</p>
-              <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+              <a id="account-addr" data-toggle="tooltip" data-placement="bottom" title="" href="#"></a>
             </div>
           </div>
           <ul class="sidebar-menu" data-widget="tree">
@@ -90,7 +91,42 @@
         </section>
 
         <section class="content">
-          
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="box box-info">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Profile Information</h3>                            
+                        </div>
+                        <form class="form-horizontal">
+                            <div class="box-body">
+                                <div class="form-group">
+                                    <label for="input-username" class="col-sm-2 control-label">Username</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="input-profile-username" placeholder="Username">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="input-profile-image" class="col-sm-2 control-label">Profile Image</label>
+                                    <div class="col-sm-10">
+                                        <input type="file" id="input-profile-image">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-10 col-sm-offset-2">
+                                        <img id="profile-image" class="profile-user-img img-responsive img-circle" src="assets/img/avatar.png" alt="User profile picture">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-footer">
+                                <button class="btn btn-default" id="btn-profile-cancel">Cancel</button>
+                                <button class="btn btn-info pull-right" id="btn-profile-update">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
         </section>
 
       </div>
@@ -104,7 +140,26 @@
 
   </div>
     
+  <div class="modal modal-warning fade" id="modal-warning">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Something is wrong&hellip;</h4>
+        </div>
+        <div class="modal-body">
+          <p id="modal-warning-msg"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btn-warning-refresh">Refresh</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
+  <!-- /.modal -->
 
+    <!-- <script src="https://unpkg.com/ipfs/dist/index.min.js"></script> -->
     <script src="assets/vendors/jquery/dist/jquery.min.js"></script>
     <script src="assets/vendors/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="assets/vendors/fastclick/lib/fastclick.js"></script>
@@ -113,17 +168,190 @@
     <script src="assets/vendors/jquery-slimscroll/jquery.slimscroll.min.js"></script>
     <script src="assets/vendors/chart.js/Chart.js"></script>
     <script src="assets/vendors/moment/moment.js"></script>
+    <script src="assets/vendors/toastr/js/toastr.min.js"></script>
+    <script src="assets/js/bundle.js"></script>
     <script src="assets/js/tokensale.js"></script>
 
     <script>
+
+      
       $(document).ready(function() {
+
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": true,
+          "positionClass": "toast-top-center",
+          "preventDuplicates": true,
+          "onclick": null,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut"
+        }        
+
+        // Init IPFS
+        //var node = new window.Ipfs();
+        node.on('ready', function () {
+          console.log('IPFS is ready!');
+        });
+
+        var updateUI = function () {
+
+          if (TokenSale.props.username.length > 0) {
+            $('#username').html(TokenSale.props.username);
+            $('#input-profile-username').val(TokenSale.props.username);
+          } else {
+            $('#username').html('Guest');
+            $('#input-profile-username').val('');
+          }
+
+          var accountAddress = TokenSale.props.web3.eth.defaultAccount;
+          if (accountAddress.length > 27) {
+            accountAddress = accountAddress.substring(0, 24) + "...";
+          }
+          $('#account-addr').html(accountAddress);
+          $('#account-addr').attr('title', "Account: " + TokenSale.props.web3.eth.defaultAccount);
+
+
+        }
+
+        var accountChange = function () {
+          TokenSale.retrieveTokenInfo(function (err, result) {
+
+            if (err) {
+              console.log('[Main] Error: (Fail to retrieve token info when account change.) ' + err);
+            } else {
+              
+              toastr.success('Address: ' + TokenSale.props.web3.eth.defaultAccount, 'Account Change');
+              updateUI();
+            }
+
+          });
+          
+        }
+
+        var displayProfileImage = function (hash) {
+          node.files.cat(hash, function (err, result) {
+            if (err) {
+              console.log('[Main] Error: (IPFS cat error) ' + err);
+              return;
+            }
+            console.log('[Main] IPFS cat success.');
+            $('#profile-image').attr('src', result);
+          });
+        }
+
+        // Profile Events
+        $(document).on("click", "#btn-warning-refresh", function (e) {
+          location.reload();
+        });
+
+        $(document).on('click', '#btn-profile-update', function (e) {
+          e.preventDefault();
+          var username = $('#input-profile-username').val();
+          console.log('[Main] New username: ' + username);
+
+          TokenSale.setUsername(username, function (err, result) {
+            if (err) {
+              toastr.error(err, 'Update Profile Error');
+            } else {
+              toastr.success('Success update profile information.', 'Success');
+              updateUI();
+            }
+          });
+        });
+
+        $(document).on('change', '#input-profile-image', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+
+          var files = e.target.files;
+          if (!files.length) {
+            toastr.warning('Please choose an image file.', 'Warning');
+            return false;
+          }
+
+          if (!files[0].type.match('image.*')) {
+            toastr.warning('Only image file is allowed.', 'Warning');
+            $('#input-profile-image').val('');
+            return false;            
+          }
+
+          console.log('[Main] Profile Image: ' + files[0].name + ' Size:' + files[0].size + ' Type:' + files[0].type);
+          
+          // Reading
+          var f = files[0];
+          var reader = new FileReader();
+
+          reader.onload = (function(theFile) {
+            return function(e) {
+              // Render thumbnail.
+              //$('#profile-image').attr('src', e.target.result);
+              $('#profile-image').attr('title', escape(theFile.name));
+              
+              var data = e.target.result;
+              node.files.add(Buffer.from(data), function (err, result) {
+                if (err) {
+                  console.log('[Main] Error: (Upload profile to IPFS) ' + err + ', ' + result);
+                } else {
+                  result.forEach(function (file) {
+                    console.log('[Main] (Upload profile to IPFS) Hash: ' + file.hash + ' Len: '+ file.hash.length);
+                    displayProfileImage(file.hash);
+                  });
+                }
+              });
+            };
+          })(f);          
+
+          reader.readAsDataURL(f);
+
+        });
+
         TokenSale.init({}, function (err, result) {
           if (err) {
             console.log('[Main] Error: ' + err);
+            
+            if (err == 'metamask-not-found') {
+              $('#modal-warning-msg').html("Please install MetaMask.");
+            } else if (err == 'not-sign-in') {
+              $('#modal-warning-msg').html("Please sign in MetaMask.");
+              
+              // Monitor MetaMask sign-in 
+              TokenSale.monitorMetaMaskSignIn(function () {
+                console.log('[Main] MetaMask is signed in.');
+                // Dismiss warning modal
+                $('#modal-warning').modal('hide');
+
+                updateUI();
+                
+                TokenSale.monitorAccountChange(accountChange);
+              });
+
+            } else {
+              $('#modal-warning-msg').html(err);
+            }
+
+            // Pop warning modal
+            $('#modal-warning').modal({
+              backdrop: 'static',
+              keyboard: false
+            });
+
           } else {
+
             console.log('[Main] Result: ' + result);
             console.log('[Main] Token Contract: ' + TokenSale.props.tokenAddress);
             console.log('[Main] Token Sale Contract: ' + TokenSale.props.tokenSaleAddress);
+
+            updateUI();
+
+            TokenSale.monitorAccountChange(accountChange);
             
           }
         });

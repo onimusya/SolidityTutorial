@@ -18,7 +18,10 @@ var TokenSale = function () {
                 symbol: '',
                 decimals: 0,
                 totalSupply: 0
-            }
+            },
+            username: "",
+            account: "",
+            accountChangeTimerId: 0,
         },
 
         init: function (option, callback) {
@@ -27,7 +30,7 @@ var TokenSale = function () {
             $.ajax({
                 url: '/assets/contracts/FrancisToken.json'
             }).done(function (data) {
-                console.log('[TokenSale.init] Data: ' + JSON.stringify(data));
+                //console.log('[TokenSale.init] Data: ' + JSON.stringify(data));
                 tsObj.props.tokenAddress = data['contractAddress'];
                 tsObj.props.tokenAbi = data['abi'];
                 tsObj.props.tokenContract = web3.eth.contract(tsObj.props.tokenAbi).at(tsObj.props.tokenAddress);
@@ -35,7 +38,7 @@ var TokenSale = function () {
                 $.ajax({
                     url: '/assets/contracts/FrancisTokenSale.json'
                 }).done(function(data) {
-                    console.log('[TokenSale.init] Data: ' + JSON.stringify(data));
+                    //console.log('[TokenSale.init] Data: ' + JSON.stringify(data));
                     tsObj.props.tokenSaleAddress = data['contractAddress'];
                     tsObj.props.tokenSaleAbi = data['abi'];   
                     tsObj.props.tokenSaleContract = web3.eth.contract(tsObj.props.tokenSaleAbi).at(tsObj.props.tokenSaleAddress);
@@ -65,7 +68,7 @@ var TokenSale = function () {
                 if (typeof web3 === "undefined") {
                     console.log('[TokenSale.connectWithBlockchain()] MetaMask is not installed.');
                     if (callback) {
-                        callback("Please install MetaMask.", false);
+                        callback("metamask-not-found", false);
                     }
 
                 } else {
@@ -74,7 +77,7 @@ var TokenSale = function () {
                         console.log('[TokenSale.connectWithBlockchain()] No sign in');
                         this.props.signedIn = false;    
                         if (callback) {
-                            callback("MetaMask is not sign in.", false);
+                            callback("not-sign-in", false);
                         }                        
                         return;
 
@@ -111,23 +114,7 @@ var TokenSale = function () {
                         console.log('[TokenSale.connectWithBlockchain()] Provider is MetaMask.'); 
                     }
                     
-
-                    var tsObj = this;
-
-                    this.props.tokenContract.name(function (err, result) {
-                        if (err) {
-                            console.log("[TokenSale.connectWithBlockchain()] Error: (Get token name) " + err);
-                            if (callback) {
-                                callback(err, false);
-                            }        
-                        } else {
-                            console.log("[TokenSale.connectwithBlockchain()] Token Name: " + result);          
-                            tsObj.props.tokenInfo.name = result;
-                            if (callback) {
-                                callback(false, 'success');
-                            }
-                        }
-                    });
+                    this.retrieveTokenInfo(callback);
 
                 }
 
@@ -142,6 +129,153 @@ var TokenSale = function () {
                 return;
             }
 
+        },
+
+        monitorMetaMaskSignIn: function (callback) {
+            var tsObj = this;
+            var timerId = window.setInterval(function () {
+                if (typeof web3.eth.defaultAccount !== "undefined") {
+                    window.clearInterval(timerId);
+                    tsObj.props.account = web3.eth.defaultAccount;
+                    tsObj.retrieveTokenInfo(callback);
+
+                }
+            }, 1000);
+        },
+
+        monitorAccountChange: function (callback) {
+            var tsObj = this;
+            var timerId = window.setInterval(function () {
+                if (web3.eth.defaultAccount !== tsObj.props.account) {
+                    tsObj.props.account = web3.eth.defaultAccount;
+
+                    if (callback) {
+                        callback();
+                    }
+                }
+            }, 1000);
+            this.props.accountChangeTimerId = timerId;
+            return timerId;
+        },
+
+        stopMonitorAccountChange: function () {
+            if (this.props.accountChangeTimerId > 0) {
+                window.clearInterval(this.props.accountChangeTimerId);
+                this.props.accountChangeTimerId = 0;
+            }
+        },
+
+        retrieveTokenInfo: function (callback) {
+            var tsObj = this;
+            var jobCounter = 0;
+            var errorCounter = 0;
+
+            tsObj.props.account = web3.eth.defaultAccount;
+
+            this.props.tokenContract.name(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get token name) " + err);
+                    errorCounter++;
+                } else {
+                    console.log("[TokenSale.connectWithBlockchain()] Token Name: " + result);          
+                    tsObj.props.tokenInfo.name = result;
+                }
+                jobCounter++;
+            });
+
+            this.props.tokenContract.symbol(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get token symbol) " + err);
+                    errorCounter++;
+                } else {
+                    console.log("[TokenSale.connectWithBlockchain()] Token symbol: " + result);          
+                    tsObj.props.tokenInfo.symbol = result;
+                }
+                jobCounter++;
+            });
+
+
+            this.props.tokenContract.decimals(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get token decimals) " + err);
+                    errorCounter++;
+                } else {
+                    console.log("[TokenSale.connectwithBlockchain()] Token Decimals: " + result);          
+                    tsObj.props.tokenInfo.decimals = result;
+                }
+                jobCounter++;
+            });
+
+            this.props.tokenContract.totalSupply(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get token total supply) " + err);
+                    errorCounter++;
+                } else {
+                    console.log("[TokenSale.connectwithBlockchain()] Token Total Supply: " + result);          
+                    tsObj.props.tokenInfo.totalSupply = result;
+                }
+                jobCounter++;
+            });
+
+            // Get username
+            this.props.tokenSaleContract.getUsername(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get username) " + err);
+                    errorCounter++;                            
+                } else {
+                    console.log("[TokenSale.connectwithBlockchain()] Username: " + result);          
+                    tsObj.props.username = result;                    
+                }
+                jobCounter++;
+            });
+
+            var timerId = window.setInterval(function() {
+                if (jobCounter >= 5) {
+                    // All task completed
+                    window.clearInterval(timerId);
+
+                    if (errorCounter > 0) {
+                        // Contains error
+                        if (callback) {
+                            callback("Error while retrieve token information", false);
+                        } 
+                    } else {
+                        if (callback) {
+                            callback(false, "success");
+                        } 
+                    }
+                }
+            }, 1000);
+        },
+
+        getUsername: function (callback) {
+            this.props.tokenSaleContract.getUsername(function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.getUsername()] Error: " + err);
+                } else {
+                    console.log("[TokenSale.getUsername()] Result: " + result);
+                }
+                
+                if (callback) {
+                    callback(err, result);
+                }
+            });
+        },
+
+        setUsername: function (username, callback) {
+            var tsObj = this;
+            this.props.tokenSaleContract.setUsername(username, function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.setUsername()] " + err);
+                } else {
+                    console.log("[TokenSale.setUsername()] Result: " + result);
+                    tsObj.props.username = username;
+                }
+                
+                if (callback) {
+                    callback(err, result);
+                }
+            });
         }
     }
 }();

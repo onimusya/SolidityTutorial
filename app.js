@@ -3,7 +3,9 @@
 const path = require('path');
 const fs = require('fs');
 const solc = require('solc');
-const Web3 = require('web3')
+const Web3 = require('web3');
+const browserify = require('browserify');
+
 const Tx = require('ethereumjs-tx');
 //const sleep = require('sleep');
 const SolidityFunction = require('web3/lib/web3/function');
@@ -781,5 +783,11 @@ if (typeof argv.tokensale !== 'undefined') {
     return;
 }
 
-
+if (typeof argv.bundle !== 'undefined') {
+    var bundler = browserify('ipfs-src.js');
+    bundler.transform('uglifyify', { global: true  })
+    bundler.bundle().pipe(fs.createWriteStream('www/assets/js/bundle.js'));
+    console.log('JS bundle done.');
+    return;
+}
 console.log('End here.');
