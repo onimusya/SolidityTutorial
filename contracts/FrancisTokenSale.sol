@@ -24,6 +24,11 @@ contract FrancisTokenSale is Ownable, DateTime {
 
     uint private _requireWhitelist;
     
+    uint constant _usernameLimit = 32;
+
+    mapping (address => string) private _username;
+    mapping (bytes32 => address) private _usernameHash;
+
     // uint is index, start with 1
     mapping (address => uint) private _whitelist;
     address[] private _whitelistAddress;
@@ -42,6 +47,48 @@ contract FrancisTokenSale is Ownable, DateTime {
 
     constructor () public Ownable() {
 
+    }
+
+    function setUsername(string name_) public {
+        bytes memory n = bytes(name_);
+        if (n.length > _usernameLimit) {
+            revert("Username is too long.");
+        }
+
+        bytes32 h = keccak256(abi.encodePacked(name_));
+
+        if (bytes(_username[msg.sender]).length == 0) {
+            // New username
+            // Check username is exist?
+            if (_usernameHash[h] != address(0) ) {
+                revert("Username is used.");
+            }
+
+            _username[msg.sender] = name_;
+            _usernameHash[h] = msg.sender;
+
+        } else {
+            // Existing username
+            if (_usernameHash[h] == address(0)) {
+                
+                // Reset the old hash record
+                bytes32 o = keccak256(abi.encodePacked(_username[msg.sender]));
+                _usernameHash[o] = address(0);
+
+                // Update new one
+                _username[msg.sender] = name_;
+                _usernameHash[h] = msg.sender;
+
+            } else {
+                revert("Username is used.");
+            }
+        }
+
+        
+    }
+
+    function getUsername() public view returns (string) {
+        return _username[msg.sender];
     }
 
     function setRequireWhitelist(uint value_) public onlyOwner {

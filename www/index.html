@@ -46,10 +46,66 @@
         </nav>
 
       </header>
+
+      <aside class="main-sidebar">
+        <section class="sidebar">
+          <div class="user-panel">
+            <div class="pull-left image">
+              <img src="assets/img/avatar.png" class="img-circle" alt="User Image">
+            </div>
+            <div class="pull-left info">
+              <p id="username">Anonymous</p>
+              <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+            </div>
+          </div>
+          <ul class="sidebar-menu" data-widget="tree">
+            <li class="header">MAIN NAVIGATION</li>
+            <li class="active treeview menu-open">
+              <a href="#">
+                <i class="fa fa-dashboard"></i> <span>Dashboard</span>
+                <span class="pull-right-container">
+                  <i class="fa fa-angle-left pull-right"></i>
+                </span>
+              </a>
+              <ul class="treeview-menu">
+                <li class="active"><a href="#"><i class="fa fa-circle-o"></i> Token Sale</a></li>
+              </ul>
+            </li>            
+          </ul>
+        </section>
+      </aside>
+
+      <div class="content-wrapper">
+        <section class="content-header">
+
+          <h1>
+            Dashboard
+            <small>Version 1.0</small>
+          </h1>
+          <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li class="active">Dashboard</li>
+          </ol>
+
+        </section>
+
+        <section class="content">
+          
+        </section>
+
+      </div>
+
+      <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+          <b>Version</b> 1.0.0
+        </div>
+        <strong>Copyright &copy; 2018 <a href="#">Francis Hor</a>.</strong> All rights reserved.
+      </footer>
+
   </div>
     
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="assets/vendors/jquery/dist/jquery.min.js"></script>
     <script src="assets/vendors/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="assets/vendors/fastclick/lib/fastclick.js"></script>
     <script src="assets/js/adminlte.js"></script>
@@ -57,6 +113,23 @@
     <script src="assets/vendors/jquery-slimscroll/jquery.slimscroll.min.js"></script>
     <script src="assets/vendors/chart.js/Chart.js"></script>
     <script src="assets/vendors/moment/moment.js"></script>
+    <script src="assets/js/tokensale.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        TokenSale.init({}, function (err, result) {
+          if (err) {
+            console.log('[Main] Error: ' + err);
+          } else {
+            console.log('[Main] Result: ' + result);
+            console.log('[Main] Token Contract: ' + TokenSale.props.tokenAddress);
+            console.log('[Main] Token Sale Contract: ' + TokenSale.props.tokenSaleAddress);
+            
+          }
+        });
+      });
+    </script>
+  
 
 
 </body>
