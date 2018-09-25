@@ -20,6 +20,12 @@ contract FrancisTokenSale is Ownable, DateTime {
         
     }
 
+    struct Multihash {
+        bytes32 digest;
+        uint8 hashFunction;
+        uint8 size;
+    }
+
     PriceTier[] private _priceTiers;
 
     uint private _requireWhitelist;
@@ -37,6 +43,9 @@ contract FrancisTokenSale is Ownable, DateTime {
     mapping (address => uint) private _pendingWhitelist;
     address[] private _pendingWhitelistAddress;
 
+    // Profile Image Entries
+    mapping (address => Multihash) private _imageEntries;
+
     event PurchaseToken(address indexed to, uint value, uint tokenAmount);
     event Withdraw(address indexed to, uint value);
 
@@ -45,8 +54,29 @@ contract FrancisTokenSale is Ownable, DateTime {
     event RemovePendingWhitelist(address indexed addr);
     event RemoveWhitelist(address indexed addr);
 
+    event ImageSet (address indexed key, bytes32 digest, uint8 hashFunction, uint8 size);
+
+    event ImageDeleted (address indexed key);
+
     constructor () public Ownable() {
 
+    }
+
+    function setImageEntry(bytes32 _digest, uint8 _hashFunction, uint8 _size) public {
+        Multihash memory entry = Multihash(_digest, _hashFunction, _size);
+        _imageEntries[msg.sender] = entry;
+        emit ImageSet(msg.sender, _digest, _hashFunction, _size);
+    }
+
+    function clearImageEntry() public {
+        require(_imageEntries[msg.sender].digest != 0);
+        delete _imageEntries[msg.sender];
+        emit ImageDeleted(msg.sender);
+    }
+
+    function getImageEntry(address _address) public view returns(bytes32 digest, uint8 hashfunction, uint8 size) {
+        Multihash storage entry = _imageEntries[_address];
+        return (entry.digest, entry.hashFunction, entry.size);
     }
 
     function setUsername(string name_) public {

@@ -21,6 +21,7 @@ var TokenSale = function () {
             },
             username: "",
             account: "",
+            profileImageHash: [],
             accountChangeTimerId: 0,
         },
 
@@ -229,8 +230,22 @@ var TokenSale = function () {
                 jobCounter++;
             });
 
+            // Get Profile Image
+            this.props.tokenSaleContract.getImageEntry(web3.eth.defaultAccount, function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get Image Entry) " + err);
+                    errorCounter++;                            
+                } else {
+                    console.log("[TokenSale.connectwithBlockchain()] Image Entry: " + result[0]);  
+                    console.log(result);
+
+                    tsObj.props.profileImageHash = result;                    
+                }
+                jobCounter++;
+            });
+
             var timerId = window.setInterval(function() {
-                if (jobCounter >= 5) {
+                if (jobCounter >= 6) {
                     // All task completed
                     window.clearInterval(timerId);
 
@@ -276,6 +291,54 @@ var TokenSale = function () {
                     callback(err, result);
                 }
             });
+        }
+    }
+}();
+
+var Multihash = function () {
+    "use strict";
+
+    return {
+        getBytes32FromMultihash: function (multihash) {
+            var decoded = bs58.decode(multihash);
+
+            return {
+                //digest: `0x${decoded.slice(2).toString('hex')}`,
+                digest: '0x' + decoded.slice(2).toString('hex'),
+                hashFunction: decoded[0],
+                size: decoded[1],
+            };            
+        },
+
+        getMultihashFromBytes32: function (multihash) {
+            var digest = multihash.digest;
+            var hashFunction = multihash.hashFunction;
+            var size = multihash.size;
+            if (size === 0) return null;
+
+            var hashBytes = Buffer.from(digest.slice(2), 'hex');
+            var multihashBytes = new (hashBytes.constructor)(2 + hashBytes.length);
+            multihashBytes[0] = hashFunction;
+            multihashBytes[1] = size;
+            multihashBytes.set(hashBytes, 2);
+
+            return bs58.encode(multihashBytes);
+        },
+
+        parseContractResponse: function(response) {
+            var digest = response[0];
+            var hashFunction = response[1];
+            var size = response[2];
+
+            return {
+                digest,
+                hashFunction: hashFunction.toNumber(),
+                size: size.toNumber(),
+            };            
+        },
+
+        getMultihashFromContractResponse: function (response) {
+            return this.getMultihashFromBytes32(this.parseContractResponse(response));
         }
     }
 }();

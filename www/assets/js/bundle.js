@@ -1,9 +1,9 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
-"use strict";var IPFS=require("ipfs"),Buffer=require("buffer/").Buffer,node=new IPFS({repo:String(Math.random()+Date.now())});global.Buffer=Buffer,global.node=node;
+"use strict";var IPFS=require("ipfs"),Buffer=require("buffer/").Buffer,bs58=require("bs58"),node=new IPFS({repo:String(Math.random()+Date.now())});global.Buffer=Buffer,global.node=node,global.bs58=bs58;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer/":178,"ipfs":515}],2:[function(require,module,exports){
+},{"bs58":172,"buffer/":178,"ipfs":515}],2:[function(require,module,exports){
 "use strict";var _=require("lodash");module.exports=function(){var r={};return _.toArray(arguments).reverse().forEach(function(e){_.mergeWith(r,e,function(r,e){return _.isArray(e)?e:void 0})}),r};
 
 },{"lodash":1106}],3:[function(require,module,exports){
