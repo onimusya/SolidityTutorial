@@ -92,6 +92,37 @@
 
         <section class="content">
             <div class="row">
+              <div class="col-lg-3 col-sm-6">
+                <div class="small-box bg-aqua">
+                  <div class="inner">
+                    <h3 id="eth-balance">0</h3>
+          
+                    <p>ETH</p>
+                  </div>
+                  <div class="icon">
+                    <i class="ion ion-bag"></i>
+                  </div>
+                  <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-xs-6">
+                  <!-- small box -->
+                  <div class="small-box bg-green">
+                    <div class="inner">
+                      <h3 id="token-balance">0</h3>
+        
+                      <p id="token-symbol">...</p>
+                    </div>
+                    <div class="icon">
+                      <i class="ion ion-stats-bars"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                  </div>
+                </div>
+
+            </div>
+            <div class="row">
                 <div class="col-md-6">
                     <div class="box box-info">
                         <div class="box-header with-border">
@@ -255,6 +286,21 @@
             $('#profile-image').attr('src', 'assets/img/avatar.png');
             $('#profile-icon').attr('src', 'assets/img/avatar.png');
           }
+
+          // Update ETH Balance
+          TokenSale.getEthBalance(TokenSale.props.web3.eth.defaultAccount, function (err, result) {
+            if (err) {
+
+            } else {
+              console.log('[Main] ETH Balance: ' + result.toNumber());
+              var eth = TokenSale.props.web3.fromWei(result, 'ether');              
+              $('#eth-balance').html(eth.toFixed(4));
+            }
+          });
+
+          // Update Token Info
+          $('#token-symbol').html(TokenSale.props.tokenInfo.symbol);
+          $('#token-balance').html(TokenSale.props.tokenInfo.balance.toNumber());
         }
 
         var accountChange = function () {

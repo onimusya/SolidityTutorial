@@ -17,7 +17,8 @@ var TokenSale = function () {
                 name: '',
                 symbol: '',
                 decimals: 0,
-                totalSupply: 0
+                totalSupply: 0,
+                balance: null
             },
             username: "",
             account: "",
@@ -218,6 +219,17 @@ var TokenSale = function () {
                 jobCounter++;
             });
 
+            this.props.tokenContract.balanceOf(web3.eth.defaultAccount, function (err, result) {
+                if (err) {
+                    console.log("[TokenSale.connectWithBlockchain()] Error: (Get token balance) " + err);
+                    errorCounter++;
+                } else {
+                    console.log("[TokenSale.connectwithBlockchain()] Token Balance: " + result);          
+                    tsObj.props.tokenInfo.balance = result;
+                }
+                jobCounter++;
+            });
+
             // Get username
             this.props.tokenSaleContract.getUsername(function (err, result) {
                 if (err) {
@@ -245,7 +257,7 @@ var TokenSale = function () {
             });
 
             var timerId = window.setInterval(function() {
-                if (jobCounter >= 6) {
+                if (jobCounter >= 7) {
                     // All task completed
                     window.clearInterval(timerId);
 
@@ -291,7 +303,17 @@ var TokenSale = function () {
                     callback(err, result);
                 }
             });
+        },
+
+        getEthBalance: function (address, callback) {
+            var tsObj = this;
+            this.props.web3.eth.getBalance(address, function (err, result) {
+                if (callback) {
+                    callback(err, result);
+                }
+            });
         }
+
     }
 }();
 
