@@ -62,6 +62,7 @@ var TokenSale = function () {
                     callback(errorThrown, false);
                 }
             });
+
             
         },
 
@@ -376,6 +377,27 @@ var TokenSale = function () {
                     callback(err, result);
                 }
             });
+        },
+
+        getFiatPrice: function (cryptoCodes, fiatCodes, callback) {
+            var tsObj = this;
+
+            // Load ETH Price
+            $.ajax({
+                url: 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + cryptoCodes +'&tsyms=' + fiatCodes
+            }).done(function (data) {
+                console.log('[TokenSale.init] ETH Price Data ');
+                console.log(data);
+                if (callback) {
+                    callback(false, data);
+                }
+            }).fail(function (xhr, textStatus, errorThrown) {
+                console.log('[TokenSale.init] Error: (ETH Price) ' + errorThrown);
+                if (callback) {
+                    callback(errorThrown, false);
+                }
+            });
+
         }
 
     }

@@ -120,7 +120,7 @@
                   <div class="inner">
                     <h3 id="eth-balance">0</h3>
           
-                    <p>ETH</p>
+                    <p id="eth-price">ETH</p>
                   </div>
                   <div class="icon">
                     <i class="ion ion-bag"></i>
@@ -412,8 +412,21 @@
               console.log('[Main] ETH Balance: ' + result.toNumber());
               var eth = TokenSale.props.web3.fromWei(result, 'ether');              
               $('#eth-balance').html(eth.toFixed(4));
+
+              // Update ETH Price
+              TokenSale.getFiatPrice('BTC,ETH', 'USD,MYR', function (err, result) {
+                if (err) {
+
+                } else {
+                  var totalUSD = result['ETH']['USD'] * eth;
+                  $('#eth-price').html('ETH <strong>(USD ' + totalUSD.toFixed(4) + ')</strong>');
+                }
+
+              });
+
             }
           });
+
 
           // Update Token Info
           $('#token-symbol').html(TokenSale.props.tokenInfo.symbol);
