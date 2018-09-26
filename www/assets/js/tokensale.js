@@ -89,6 +89,8 @@ var TokenSale = function () {
                         console.log('[TokenSale.connectWithBlockchain()] Sign In: ' + web3.eth.defaultAccount);    
                     }
 
+                    var validNetwork = false;
+
                     switch (web3.version.network) {
                         case '1':
                             console.log('[TokenSale.connectWithBlockchain()] Connect to Main Net.' )
@@ -96,6 +98,7 @@ var TokenSale = function () {
     
                         case '3':
                             console.log('[TokenSale.connectWithBlockchain()] Connect to Ropsten Test Net.' )
+                            validNetwork = true;
                             break;
     
                         case '4':
@@ -108,6 +111,7 @@ var TokenSale = function () {
     
                         default:
                             console.log('[TokenSale.connectWithBlockchain()] Connect to unknown network (' + web3.version.network + ').');
+                            validNetwork = true;
                             break;
     
                     }
@@ -116,7 +120,14 @@ var TokenSale = function () {
                         console.log('[TokenSale.connectWithBlockchain()] Provider is MetaMask.'); 
                     }
                     
-                    this.retrieveTokenInfo(callback);
+                    if (validNetwork) {
+                        this.retrieveTokenInfo(callback);
+                    } else {
+                        if (callback) {
+                            callback('invalid-network', false);
+                        }
+                    }
+                    
 
                 }
 
@@ -137,9 +148,42 @@ var TokenSale = function () {
             var tsObj = this;
             var timerId = window.setInterval(function () {
                 if (typeof web3.eth.defaultAccount !== "undefined") {
-                    window.clearInterval(timerId);
-                    tsObj.props.account = web3.eth.defaultAccount;
-                    tsObj.retrieveTokenInfo(callback);
+
+                    var validNetwork = false;
+
+                    switch (web3.version.network) {
+                        case '1':
+                            console.log('[TokenSale.monitorMetaMaskSignIn()] Connect to Main Net.' )
+                            break;
+    
+                        case '3':
+                            console.log('[TokenSale.monitorMetaMaskSignIn()] Connect to Ropsten Test Net.' )
+                            validNetwork = true;
+                            break;
+    
+                        case '4':
+                            console.log('[TokenSale.monitorMetaMaskSignIn()] Connect to Ringkeby Test Net.' )
+                            break;
+    
+                        case '42':
+                            console.log('[TokenSale.monitorMetaMaskSignIn()] Connect to Kovan Test Net.' )
+                            break;
+    
+                        default:
+                            console.log('[TokenSale.monitorMetaMaskSignIn()] Connect to unknown network (' + web3.version.network + ').');
+                            validNetwork = true;
+                            break;
+                    }
+
+                    if (validNetwork) {
+                        tsObj.props.web3 = web3;
+                        tsObj.props.signedIn = true;                        
+                        tsObj.props.account = web3.eth.defaultAccount;
+                    
+                        window.clearInterval(timerId);
+                        tsObj.retrieveTokenInfo(callback);
+                    }
+                    
 
                 }
             }, 1000);

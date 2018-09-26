@@ -92,6 +92,16 @@
 
         <section class="content">
             <div class="row">
+              <div class="col-md-12">
+                  <div class="callout callout-info">
+                      <h4>Token Sale Contract Address</h4>
+      
+                      <p id="token-sale-address">...</p>
+                    </div>                
+              </div>
+            </div>
+
+            <div class="row">
               <div class="col-lg-3 col-sm-6">
                 <div class="small-box bg-aqua">
                   <div class="inner">
@@ -119,7 +129,22 @@
                     </div>
                     <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
                   </div>
+              </div>
+
+              <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-yellow">
+                  <div class="inner">
+                    <h3 id="token-price">0</h3>
+      
+                    <p id="token-price-tier">Token / ETH</p>
+                  </div>
+                  <div class="icon">
+                    <i class="ion ion-person-add"></i>
+                  </div>
+                  <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
                 </div>
+              </div>
 
             </div>
             <div class="row">
@@ -247,6 +272,8 @@
 
         var updateUI = function () {
 
+          $('#token-sale-address').html(TokenSale.props.tokenSaleAddress);
+          
           if (TokenSale.props.username.length > 0) {
             $('#username').html(TokenSale.props.username);
             $('#input-profile-username').val(TokenSale.props.username);
@@ -300,7 +327,33 @@
 
           // Update Token Info
           $('#token-symbol').html(TokenSale.props.tokenInfo.symbol);
-          $('#token-balance').html(TokenSale.props.tokenInfo.balance.toNumber());
+
+          var tokenBalance = TokenSale.props.tokenInfo.balance / Math.pow(10, TokenSale.props.tokenInfo.decimals);
+
+          $('#token-balance').html(tokenBalance.toFixed(4));
+
+          // Get Current Price Tier
+          TokenSale.props.tokenSaleContract.getCurrentPriceTierIndex(function (err, result) {
+            if (err) {
+              console.log('[Main] Error: (Get current price tier index in update ui) ' + err);
+            } else {
+
+              var index = result;
+              TokenSale.props.tokenSaleContract.getPriceTier(index, function (err, result) {
+                if (err) {
+                  console.log('[Main] Error: (Get current price tier in update ui) ' + err);
+                } else {
+                  // 0 - Token Price
+                  //console.log(result);
+
+                  $('#token-price').html(result[0].toNumber());
+                  $('#token-price-tier').html(TokenSale.props.tokenInfo.symbol + ' / ETH (Tier ' + (index.toNumber() + 1) + ')');
+
+                }
+
+              });
+            }
+          });
         }
 
         var accountChange = function () {
@@ -442,6 +495,9 @@
                 TokenSale.monitorAccountChange(accountChange);
               });
 
+            } else if (err == 'invalid-network') {
+              $('#modal-warning-msg').html("Please switch to Ropsten or Private Network.");
+              
             } else {
               $('#modal-warning-msg').html(err);
             }

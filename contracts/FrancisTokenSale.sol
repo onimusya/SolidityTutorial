@@ -176,14 +176,14 @@ contract FrancisTokenSale is Ownable, DateTime {
         return _whitelistAddress.length;
     }
 
-    function getWhitelist(uint index_) public view onlyOwner returns (address) {
+    function getWhitelistByIndex(uint index_) public view onlyOwner returns (address) {
         require (index_ > 0);
         require (index_ <= _whitelistAddress.length);
 
         return _whitelistAddress[index_ - 1];
     }
 
-    function getWhitelistIndex(address addr_) public view onlyOwner returns (uint) {
+    function isWhitelist(address addr_) public view returns (uint) {
         require (addr_ != address(0));
 
         return _whitelist[addr_];
@@ -271,6 +271,7 @@ contract FrancisTokenSale is Ownable, DateTime {
     function updatePriceTier(uint index_, uint tokenPrice_, uint maxSupply_, uint timestamp_) public onlyOwner {
         require ((tokenPrice_ > 0) && (_priceTiers.length > index_));
 
+        /*
         _priceTiers[index_] = PriceTier({ 
             tokenPrice: tokenPrice_,
             maxSupply: maxSupply_,
@@ -278,6 +279,10 @@ contract FrancisTokenSale is Ownable, DateTime {
             timestamp: timestamp_,
             isActive: 1
         });
+        */
+        _priceTiers[index_].tokenPrice = tokenPrice_;
+        _priceTiers[index_].maxSupply = maxSupply_;
+        _priceTiers[index_].timestamp = timestamp_;
         
     }
 
@@ -335,8 +340,10 @@ contract FrancisTokenSale is Ownable, DateTime {
         uint tokenAmount_ = SafeMath.mul(priceTier_.tokenPrice, value_);
         priceTier_.totalToken = priceTier_.totalToken.add(tokenAmount_);
 
-        require (priceTier_.maxSupply >= priceTier_.totalToken);
-
+        if (priceTier_.maxSupply > 0) {
+            require (priceTier_.maxSupply >= priceTier_.totalToken);
+        }
+        
         _token.mint(to_, tokenAmount_);
         
         emit PurchaseToken(to_, value_, tokenAmount_);

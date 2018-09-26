@@ -199,7 +199,7 @@ function deployContract(contract) {
     var bytecode = jsonOutput['contracts'][contract][path.parse(contract).name]['evm']['bytecode']['object'];
     //console.log(bytecode);
     var tokenContract = web3.eth.contract(abi);
-    var contractData = tokenContract.new.getData('Francis Token', 'FST', 18, 100000000 * 1e18, {
+    var contractData = tokenContract.new.getData('Francis Token', 'FST', 18, 10000000000 * 1e18, {
         data: '0x' + bytecode
     });
 
@@ -619,34 +619,38 @@ if (typeof argv.tokensale !== 'undefined') {
         console.log('Generate Price Tier -->');
 
         let tokenDecimals = tokenContract.decimals();
-        let tierTokenPrice = 10;
-        let tierTimestamp = new Date('2018-09-20').getTime() / 1000;
+        let tierTokenPrice = 1000;
+        let tierTimestamp = new Date('2018-09-26').getTime() / 1000;
         let tierMaxSupply = 10000  * Math.pow(10, tokenDecimals);
 
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
-        tierTokenPrice = 9;
-        tierTimestamp = new Date('2018-09-21').getTime() / 1000;
+        tierTokenPrice = 900;
+        tierTimestamp = new Date('2018-09-28').getTime() / 1000;
+        tierMaxSupply = 20000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
-        tierTokenPrice = 8;
-        tierTimestamp = new Date('2018-09-22').getTime() / 1000;
+        tierTokenPrice = 800;
+        tierTimestamp = new Date('2018-09-30').getTime() / 1000;
+        tierMaxSupply = 30000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
-        tierTokenPrice = 7;
-        tierTimestamp = new Date('2018-09-23').getTime() / 1000;
+        tierTokenPrice = 700;
+        tierTimestamp = new Date('2018-10-02').getTime() / 1000;
+        tierMaxSupply = 40000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
-        tierTokenPrice = 6;
-        tierTimestamp = new Date('2018-09-24').getTime() / 1000;
+        tierTokenPrice = 600;
+        tierTimestamp = new Date('2018-10-04').getTime() / 1000;
+        tierMaxSupply = 0;
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
     }
