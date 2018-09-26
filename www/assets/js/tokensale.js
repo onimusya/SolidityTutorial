@@ -18,7 +18,8 @@ var TokenSale = function () {
                 symbol: '',
                 decimals: 0,
                 totalSupply: 0,
-                balance: null
+                balance: null,
+                cap: null,
             },
             username: "",
             account: "",
@@ -346,6 +347,25 @@ var TokenSale = function () {
                 if (callback) {
                     callback(err, result);
                 }
+            });
+        },
+
+        purchaseToken: function (to, value, callback) {
+            var tsObj = this;
+            var wei = this.props.web3.toWei(value, 'ether');
+            console.log('[TokenSale.purchaseToken] Wei: ' + wei);
+
+            this.props.tokenSaleContract.purchaseToken(to, { value: wei }, function (err, result) {
+                if (err) {
+                    console.log('[TokenSale.purchaseToken] ' + err);
+                } else {
+                    console.log('[TokenSale.purchaseToken] Result: ' + result);
+                }
+
+                if (callback) {
+                    callback(err, result);
+                }
+
             });
         },
 

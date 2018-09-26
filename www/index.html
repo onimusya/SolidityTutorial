@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="assets/css/AdminLTE.min.css">
   <link rel="stylesheet" href="assets/css/skins/skin-blue.min.css">
   
+  <link rel="stylesheet" href="assets/css/loading.css">
+  <link rel="stylesheet" href="assets/css/loading-btn.css">
+
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -93,10 +96,20 @@
         <section class="content">
             <div class="row">
               <div class="col-md-12">
-                  <div class="callout callout-info">
-                      <h4>Token Sale Contract Address</h4>
-      
-                      <p id="token-sale-address">...</p>
+                  <div class="callout callout-success">
+                      <h4>Smart Contract Address</h4>
+                      <p>
+                        <div class="row">
+                          <div class="col-md-6">
+                            Token Sale Address: <span id="token-sale-address">...</span>
+                          </div>
+                          <div class="col-md-6">
+                            Token Address: <span id="token-address">...</span>      
+                          </div>
+                        </div>
+                        
+                        
+                      </p>
                     </div>                
               </div>
             </div>
@@ -118,7 +131,7 @@
 
               <div class="col-lg-3 col-xs-6">
                   <!-- small box -->
-                  <div class="small-box bg-green">
+                  <div class="small-box bg-purple">
                     <div class="inner">
                       <h3 id="token-balance">0</h3>
         
@@ -146,58 +159,132 @@
                 </div>
               </div>
 
+              <div class="col-lg-3 col-xs-6">
+                  <!-- small box -->
+                  <div class="small-box bg-red">
+                    <div class="inner">
+                      <h3 id="token-total-supply">0</h3>
+        
+                      <p id="token-total-supply-text">...</p>
+                    </div>
+                    <div class="icon">
+                      <i class="ion ion-pie-graph"></i>
+                    </div>
+                    <span class="small-box-footer" id="token-cap">...</span>
+                  </div>
+                </div>              
+
             </div>
+
+
             <div class="row">
+                <!-- Left Column-->
                 <div class="col-md-6">
-                    <div class="box box-info">
-                        <div class="box-header with-border">
-                            <h3 class="box-title">Profile Information</h3>                            
-                        </div>
-                        <form class="form-horizontal">
-                            <div class="box-body">
-                                <div class="form-group">
-                                    <label for="input-username" class="col-sm-2 control-label">Username</label>
-                                    <div class="col-sm-10">
-                                        <input type="text" class="form-control" id="input-profile-username" placeholder="Username">
+                  
+                  <div class="row">
+                    <div class="col-md-12">
+                        <div class="box box-success">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Profile Information</h3>                            
+                            </div>
+                            <form class="form-horizontal">
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label for="input-username" class="col-sm-2 control-label">Username</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" id="input-profile-username" placeholder="Username">
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="box-footer">
-                                <button class="btn btn-default" id="btn-profile-cancel">Cancel</button>
-                                <button class="btn btn-info pull-right" id="btn-profile-update">Update</button>
-                            </div>
-                        </form>
+                                <div class="box-footer">
+                                    <button class="btn btn-default" id="btn-profile-cancel">Cancel</button>
+                                    <button class="btn btn-info pull-right" id="btn-profile-update">Update</button>
+                                </div>
+                            </form>
+                        </div>    
                     </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="box box-danger ld-over" id="box-buy-token">
+                            <div class="ld ld-ring ld-spin"></div>
+
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Buy Token</h3>
+        
+                                <div class="box-tools pull-right">                            
+                                    <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                                      <i class="fa fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="box-body form-horizontal">
+                                
+                                  <div class="form-group">
+                                      <label for="input-username" class="col-sm-3 control-label">Token Quantity</label>
+                                      <div class="col-sm-7">
+                                          <input type="number" class="form-control" id="input-token-quantity" placeholder="Quantity">
+                                      </div>
+                                      <div class="col-sm-2">
+                                          <span class="pull-right label label-success" id="label-eth-qty">0 ETH</span>
+                                      </div>
+                                  </div>
+                        
+                                  
+                            </div>  
+                            <div class="box-footer">
+                                  <button class="btn btn-info pull-right" id="btn-buy-token">Buy</button>
+                            </div>                  
+                            
+                            
+                              
+                        </div>
+        
+                      
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Right Column -->
                 <div class="col-md-6">
-                  <div class="box box-info">
-                      <div class="box-header with-border">
-                          <h3 class="box-title">Profile Image</h3>                            
-                      </div>
-                      <form class="form-horizontal">
-                          <div class="box-body">
-                              <div class="form-group">
-                                  <label for="input-profile-image" class="col-sm-2 control-label">Image</label>
-                                  <div class="col-sm-10">
-                                      <input type="file" id="input-profile-image">
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-sm-10 col-sm-offset-2">
-                                      <img id="profile-image" class="profile-user-img img-responsive img-circle" src="assets/img/avatar.png" alt="User profile picture">
-                                  </div>
-                              </div>
-                          </div>
-                          <div class="box-footer">
-                              <button class="btn btn-default" id="btn-profile-image-cancel">Cancel</button>
-                              <button class="btn btn-info pull-right" id="btn-profile-image-update">Update</button>
-                          </div>
-                      </form>
+                  <div class="row">
+                    <div class="col-md-12">
+                        <div class="box box-info">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Profile Image</h3>                            
+                            </div>
+                            <form class="form-horizontal">
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label for="input-profile-image" class="col-sm-2 control-label">Image</label>
+                                        <div class="col-sm-10">
+                                            <input type="file" id="input-profile-image">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="col-sm-10 col-sm-offset-2">
+                                            <img id="profile-image" class="profile-user-img img-responsive img-circle" src="assets/img/avatar.png" alt="User profile picture">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <button class="btn btn-default" id="btn-profile-image-cancel">Cancel</button>
+                                    <button class="btn btn-info pull-right" id="btn-profile-image-update">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                   </div>
               </div>
           </div>
 
+          <div class="row">
+            <div class="col-md-6">
+            </div>
+          </div>
 
         </section>
 
@@ -251,6 +338,7 @@
 
         var profileImageChange = false;
         var defaultProfileImage = 'assets/img/avatar.png';
+        var tokenPrice = 0;
 
         toastr.options = {
           "closeButton": true,
@@ -272,8 +360,10 @@
 
         var updateUI = function () {
 
-          $('#token-sale-address').html(TokenSale.props.tokenSaleAddress);
-          
+          $('#token-sale-address').html('<strong>' + TokenSale.props.tokenSaleAddress + '</strong>');
+          $('#token-address').html('<strong>' + TokenSale.props.tokenAddress + '</strong>');
+          $('#token-total-supply-text').html(TokenSale.props.tokenInfo.symbol + ' Total Supply');
+
           if (TokenSale.props.username.length > 0) {
             $('#username').html(TokenSale.props.username);
             $('#input-profile-username').val(TokenSale.props.username);
@@ -328,9 +418,46 @@
           // Update Token Info
           $('#token-symbol').html(TokenSale.props.tokenInfo.symbol);
 
-          var tokenBalance = TokenSale.props.tokenInfo.balance / Math.pow(10, TokenSale.props.tokenInfo.decimals);
+          TokenSale.props.tokenContract.balanceOf(TokenSale.props.web3.eth.defaultAccount, function (err, result) {
+              if (err) {
+                console.log("[Main] Error: (Update UI) " + err);
+              
+              } else {
+                console.log("[Main] Token Balance: " + result);          
+                TokenSale.props.tokenInfo.balance = result;
+                var tokenBalance = TokenSale.props.tokenInfo.balance / Math.pow(10, TokenSale.props.tokenInfo.decimals);
+                $('#token-balance').html(tokenBalance.toFixed(4));
+              }
+              
+          });
 
-          $('#token-balance').html(tokenBalance.toFixed(4));
+          TokenSale.props.tokenContract.totalSupply(function (err, result) {
+              if (err) {
+                console.log("[Main] Error: (Update UI) " + err);
+              
+              } else {
+                console.log("[Main] Token Total Supply: " + result);          
+                TokenSale.props.tokenInfo.totalSupply = result;
+                var tokenTotalSupply = TokenSale.props.tokenInfo.totalSupply / Math.pow(10, TokenSale.props.tokenInfo.decimals);
+                $('#token-total-supply').html(tokenTotalSupply.toFixed(4));
+              }
+              
+          });
+          
+          TokenSale.props.tokenContract.cap(function (err, result) {
+              if (err) {
+                console.log("[Main] Error: (Update UI) " + err);
+              
+              } else {
+                console.log("[Main] Token Cap: " + result);          
+                TokenSale.props.tokenInfo.cap = result;
+                var tokenCap = TokenSale.props.tokenInfo.cap / Math.pow(10, TokenSale.props.tokenInfo.decimals);
+                $('#token-cap').html('Max Supply ' + tokenCap);
+              }
+              
+          });
+
+          
 
           // Get Current Price Tier
           TokenSale.props.tokenSaleContract.getCurrentPriceTierIndex(function (err, result) {
@@ -345,7 +472,7 @@
                 } else {
                   // 0 - Token Price
                   //console.log(result);
-
+                  tokenPrice = result[0];
                   $('#token-price').html(result[0].toNumber());
                   $('#token-price-tier').html(TokenSale.props.tokenInfo.symbol + ' / ETH (Tier ' + (index.toNumber() + 1) + ')');
 
@@ -469,6 +596,62 @@
               });
 
           }
+        });
+
+        // Token quantity change
+        $(document).on('change', '#input-token-quantity', function (e) {
+          //e.stopPropagation();
+          //e.preventDefault();
+          
+          var tokenQty = TokenSale.props.web3.toBigNumber($('#input-token-quantity').val());
+          var ethQty = tokenQty / tokenPrice;
+
+          //console.log('[Main] ETH Quantity: ' + ethQty.toFixed(4));
+          $('#label-eth-qty').html(ethQty.toFixed(6) + ' ETH');
+
+        });
+
+        // Buy Token
+        $(document).on('click', '#btn-buy-token', function (e) {
+          e.preventDefault();
+
+          var tokenQty = TokenSale.props.web3.toBigNumber($('#input-token-quantity').val());
+          var ethQty = tokenQty / tokenPrice;
+          
+          console.log('[Main] Buy ' + tokenQty.toNumber() + ' token with ' + ethQty + ' ETH');
+
+          $('#box-buy-token').addClass('running');
+
+          TokenSale.purchaseToken(TokenSale.props.web3.eth.defaultAccount, ethQty, function (err, result) {
+            if (err) {
+              toastr.error(err, 'Buy Token Error');
+              $('#box-buy-token').removeClass('running');
+            } else {
+              console.log('[Main] Buy token success, ' + result);
+              $('#input-token-quantity').val(0);
+              
+              var hash = result;
+              // Check for transaction confirmation
+              var waitTimerId = window.setInterval(function () {
+                TokenSale.props.web3.eth.getTransactionReceipt(hash, function (err, result) {
+                  if (result) {
+                    // Transaction is confirmed or rejected
+                    window.clearInterval(waitTimerId);
+                    console.log('[Main] Buy token transaction status...');
+                    console.log(result);
+
+                    updateUI();
+                    $('#box-buy-token').removeClass('running');
+                  } else {
+                    console.log(err);
+                  }
+
+                });
+
+              }, 2000);
+
+            }
+          });
         });
 
         // Init IPFS

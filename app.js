@@ -52,7 +52,24 @@ var solcInput = {
 };
 
 
-const web3 = new Web3(new Web3.providers.HttpProvider(selectedHost));
+var web3 = null;
+if (typeof argv.ropsten !== 'undefined') {
+    selectedHost = "ropstenHost";
+} else if (typeof argv.kovan !== 'undefined') {
+    selectedHost = "kovanHost";
+} else if (typeof argv.rinkeby !== 'undefined') {
+    selectedHost = "rinkebyHost";
+} else if (typeof argv.mainnet !== 'undefined') {
+    selectedHost = "mainnet";
+}
+
+if (typeof argv.account !== 'undefined') {
+    selectedAccountIndex = argv.account;
+}
+
+web3 = new Web3(new Web3.providers.HttpProvider(selectedHost));
+
+
 var gasPrice = web3.eth.gasPrice;
 var gasPriceHex = web3.toHex(gasPrice);
 var gasLimitHex = web3.toHex(6000000);
@@ -199,9 +216,18 @@ function deployContract(contract) {
     var bytecode = jsonOutput['contracts'][contract][path.parse(contract).name]['evm']['bytecode']['object'];
     //console.log(bytecode);
     var tokenContract = web3.eth.contract(abi);
-    var contractData = tokenContract.new.getData('Francis Token', 'FST', 18, 10000000000 * 1e18, {
-        data: '0x' + bytecode
-    });
+    var contractData = null;
+
+    if (contract == 'FrancisToken.sol') {
+        // Mintable ERC20 Token has constructor parameters
+        contractData = tokenContract.new.getData('Unwallz Token', 'UWT', 18, 10000000000 * 1e18, {
+            data: '0x' + bytecode
+        });    
+    } else {
+        contractData = tokenContract.new.getData({
+            data: '0x' + bytecode
+        });    
+    }
 
     var rawTx = {
         nonce: nonceHex,

@@ -286,6 +286,10 @@ contract FrancisTokenSale is Ownable, DateTime {
         
     }
 
+    function updatePriceTierPrice(uint index_, uint tokenPrice_) public onlyOwner {
+        _priceTiers[index_].tokenPrice = tokenPrice_;
+    }
+
     function priceTiersCount() public view returns (uint) {
         return _priceTiers.length;
     }
