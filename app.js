@@ -54,13 +54,13 @@ var solcInput = {
 
 var web3 = null;
 if (typeof argv.ropsten !== 'undefined') {
-    selectedHost = "ropstenHost";
+    selectedHost = appConfig['networks']['ropstenHost'];
 } else if (typeof argv.kovan !== 'undefined') {
-    selectedHost = "kovanHost";
+    selectedHost = appConfig['networks']['kovanHost'];
 } else if (typeof argv.rinkeby !== 'undefined') {
-    selectedHost = "rinkebyHost";
+    selectedHost = appConfig['networks']['rinkebyHost'];
 } else if (typeof argv.mainnet !== 'undefined') {
-    selectedHost = "mainnet";
+    selectedHost = appConfig['networks']['mainnetHost'];;
 }
 
 if (typeof argv.account !== 'undefined') {
@@ -74,7 +74,7 @@ var gasPrice = web3.eth.gasPrice;
 var gasPriceHex = web3.toHex(gasPrice);
 var gasLimitHex = web3.toHex(6000000);
 var block = web3.eth.getBlock("latest");
-var nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address);
+var nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address, "pending");
 var nonceHex = web3.toHex(nonce);
 
 
@@ -246,7 +246,7 @@ function deployContract(contract) {
 
     var receipt = null;
 
-    web3.eth.sendRawTransaction(serializedTx.toString('hex'), (err, hash) => {
+    web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
         if (err) { 
             console.log(err); return; 
         }
@@ -647,7 +647,7 @@ if (typeof argv.tokensale !== 'undefined') {
         let tokenDecimals = tokenContract.decimals();
         let tierTokenPrice = 1000;
         let tierTimestamp = new Date('2018-09-26').getTime() / 1000;
-        let tierMaxSupply = 10000  * Math.pow(10, tokenDecimals);
+        let tierMaxSupply = 100000  * Math.pow(10, tokenDecimals);
 
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
@@ -655,21 +655,21 @@ if (typeof argv.tokensale !== 'undefined') {
         nonceHex = web3.toHex(nonce);
         tierTokenPrice = 900;
         tierTimestamp = new Date('2018-09-28').getTime() / 1000;
-        tierMaxSupply = 20000  * Math.pow(10, tokenDecimals);
+        tierMaxSupply = 200000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
         tierTokenPrice = 800;
         tierTimestamp = new Date('2018-09-30').getTime() / 1000;
-        tierMaxSupply = 30000  * Math.pow(10, tokenDecimals);
+        tierMaxSupply = 300000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;
         nonceHex = web3.toHex(nonce);
         tierTokenPrice = 700;
         tierTimestamp = new Date('2018-10-02').getTime() / 1000;
-        tierMaxSupply = 40000  * Math.pow(10, tokenDecimals);
+        tierMaxSupply = 400000  * Math.pow(10, tokenDecimals);
         addPriceTier(tierTokenPrice, tierMaxSupply, tierTimestamp);
 
         nonce++;

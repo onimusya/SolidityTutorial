@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/vendors/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="assets/vendors/Ionicons/css/ionicons.min.css">
   <link rel="stylesheet" href="assets/vendors/toastr/css/toastr.min.css">
+  <link rel="stylesheet" href="assets/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css">
 
   <link rel="stylesheet" href="assets/css/AdminLTE.min.css">
   <link rel="stylesheet" href="assets/css/skins/skin-blue.min.css">
@@ -84,7 +85,7 @@
 
           <h1>
             Dashboard
-            <small>Version 1.0</small>
+            <small id="network-version"></small>
           </h1>
           <ol class="breadcrumb">
             <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
@@ -333,7 +334,57 @@
           </div>
 
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
+
+                <div class="box box-success">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Transactions</h3>      
+                        
+                        <div class="box-tools pull-right">                            
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                              <i class="fa fa-minus"></i>
+                            </button>
+                        </div>
+                
+                    </div>
+                    
+                    <div class="box-body">
+                        <table id="table-transactions" class="table table-bordered table-striped">
+                            <thead>
+                              <tr>
+                                <th>TxHash</th>
+                                <th>Block</th>
+                                <th>Age</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Value</th>
+                                <th>TxFee</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                            <tfoot>
+                              <tr>
+                                <th>TxHash</th>
+                                <th>Block</th>
+                                <th>Age</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Value</th>
+                                <th>TxFee</th>
+
+                              </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="box-footer">                            
+                        <button class="btn btn-info pull-right" id="btn-profile-image-update">Update</button>
+                    </div>
+                    
+                </div>
+
+
             </div>
           </div>
 
@@ -369,7 +420,7 @@
   </div>
   <!-- /.modal -->
 
-    <!-- <script src="https://unpkg.com/ipfs/dist/index.min.js"></script> -->
+    <script src="https://unpkg.com/ipfs/dist/index.js"></script>
     <script src="assets/vendors/jquery/dist/jquery.min.js"></script>
     <script src="assets/vendors/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="assets/vendors/fastclick/lib/fastclick.js"></script>
@@ -378,6 +429,8 @@
     <script src="assets/vendors/jquery-slimscroll/jquery.slimscroll.min.js"></script>
     <script src="assets/vendors/moment/moment.js"></script>
     <script src="assets/vendors/toastr/js/toastr.min.js"></script>
+    <script src="assets/vendors/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
     <script src="assets/js/bundle.js"></script>
     <script src="assets/js/tokensale.js"></script>
 
@@ -385,6 +438,9 @@
 
       
       $(document).ready(function() {
+
+        var transactionsData = {};
+        var transactionsTable = null;
 
         var profileImageChange = false;
         var defaultProfileImage = 'assets/img/avatar.png';
@@ -408,10 +464,90 @@
           "hideMethod": "fadeOut"
         }        
 
+        var monitorPendingTransactions = function (txHash) {
+
+          var hash = txHash;
+                   
+          transactionsData["" + 'h' + txHash + ""]['timerId'] = window.setInterval(function () {
+            TokenSale.props.web3.eth.getTransactionReceipt(hash, function (err, result) {
+                  if (result) {
+                    // Transaction is confirmed or rejected
+                    window.clearInterval(transactionsData["" + 'h' + hash + ""]['timerId']);
+                    transactionsData["" + 'h' + hash + ""]['hash'] = hash;
+                    transactionsData["" + 'h' + hash + ""]['timerId'] = 0;
+                    transactionsData["" + 'h' + hash + ""]['status'] = 1;
+                    transactionsData["" + 'h' + hash + ""]['data'] = result;
+
+                    console.log('[Main] Transaction ' + hash + ' is mined');
+                    console.log(result);
+
+                    // Update the data in local storage
+                    var transactionsDataString = JSON.stringify(transactionsData);
+                    window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
+
+                    updateUI();
+                    
+                  } else {
+                    console.log('[Main] Monitor pending transaction ' + hash); 
+                    
+                  }
+
+                });
+
+          }, 2000);
+          
+        }
+
         var updateUI = function () {
 
-          $('#token-sale-address').html('<strong>' + TokenSale.props.tokenSaleAddress + '</strong>');
-          $('#token-address').html('<strong>' + TokenSale.props.tokenAddress + '</strong>');
+          var accountAddress = TokenSale.props.web3.eth.defaultAccount;
+          if (accountAddress.length > 27) {
+            accountAddress = accountAddress.substring(0, 24) + "...";
+          }
+
+          var tokenSaleAddressTag = '';
+          var tokenAddressTag = '';
+          var accountAddressTag = '';
+
+          switch (web3.version.network) {
+            case '1':
+              tokenSaleAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
+              tokenAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
+              accountAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#network-version').html('(mainnet)');
+              break;
+    
+            case '3':
+              tokenSaleAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
+              tokenAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
+              accountAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#network-version').html('(ropsten)');
+              break;
+    
+            case '4':
+              tokenSaleAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
+              tokenAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
+              accountAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#network-version').html('(rinkeby)');
+              break;
+    
+            case '42':
+              tokenSaleAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
+              tokenAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
+              accountAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#network-version').html('(kovan)');
+              break;
+
+            default:
+              tokenSaleAddressTag = TokenSale.props.tokenSaleAddress;
+              tokenAddressTag = TokenSale.props.tokenAddress;
+              accountAddressTag = accountAddress;
+              $('#network-version').html('(private)');
+          }          
+
+
+          $('#token-sale-address').html('<strong>' + tokenSaleAddressTag + '</strong>');
+          $('#token-address').html('<strong>' + tokenAddressTag + '</strong>');
           $('#token-total-supply-text').html(TokenSale.props.tokenInfo.symbol + ' Total Supply');
 
           if (TokenSale.props.username.length > 0) {
@@ -422,11 +558,7 @@
             $('#input-profile-username').val('');
           }
 
-          var accountAddress = TokenSale.props.web3.eth.defaultAccount;
-          if (accountAddress.length > 27) {
-            accountAddress = accountAddress.substring(0, 24) + "...";
-          }
-          $('#account-addr').html(accountAddress);
+          $('#account-addr').html(accountAddressTag);
           $('#account-addr').attr('title', "Account: " + TokenSale.props.web3.eth.defaultAccount);
 
           // Update Profile Image
@@ -520,8 +652,6 @@
               
           });
 
-          
-
           // Get Current Price Tier
           TokenSale.props.tokenSaleContract.getCurrentPriceTierIndex(function (err, result) {
             if (err) {
@@ -535,9 +665,9 @@
                 } else {
                   // 0 - Token Price
                   //console.log(result);
-                  tokenPrice = result[0];
-                  $('#token-price').html(result[0].toNumber());
-                  $('#token-price-tier').html(TokenSale.props.tokenInfo.symbol + ' / ETH (Tier ' + (index.toNumber() + 1) + ')');
+                  tokenPrice = (1 / result[0]);
+                  $('#token-price').html(tokenPrice);
+                  $('#token-price-tier').html(' ETH / ' + TokenSale.props.tokenInfo.symbol + ' (Tier ' + (index.toNumber() + 1) + ')');
 
                 }
 
@@ -553,12 +683,88 @@
               console.log('[Main] Error: (Fail to retrieve token info when account change.) ' + err);
             } else {
               
+              var transactionsDataString = localStorage.getItem(web3.eth.defaultAccount);
+              transactionsData = JSON.parse(transactionsDataString);
+              console.log('[Main] Local Storage Transaction Data: ' + transactionsDataString);
+              updateTransactionsTable();
+
               toastr.success('Address: ' + TokenSale.props.web3.eth.defaultAccount, 'Account Change');
               updateUI();
             }
 
           });
           
+        }
+
+        var transactionsTableAddRow = function (txHash) {
+          var myHash = '';
+          var host = '';
+                    switch (web3.version.network) {
+                        case '1':
+                            
+                            host = 'https://etherscan.io/tx/';
+                            break;
+    
+                        case '3':
+                            
+                            host = 'https://ropsten.etherscan.io/tx/';
+                            break;
+    
+                        case '4':
+                            host = 'https://rinkeby.etherscan.io/tx/';
+                            break;
+    
+                        case '42':
+                            host = 'https://kovan.etherscan.io/tx/';
+                            break;
+    
+                        default:
+                            host = '';
+                          break;
+                    }
+
+            myHash = '<a href="' + host + txHash + '" target="_blank">' + txHash.substring(0, 25) + '...</a>';
+
+            transactionsTable.row.add([ myHash, "", "", "", "", "", "" ]).draw();
+
+        }
+
+        var updateTransactionsTable = function () {
+          
+          
+          console.log(transactionsData);
+          var myHash = '';
+          var host = '';
+                    switch (web3.version.network) {
+                        case '1':
+                            
+                            host = 'https://etherscan.io/tx/';
+                            break;
+    
+                        case '3':
+                            
+                            host = 'https://ropsten.etherscan.io/tx/';
+                            break;
+    
+                        case '4':
+                            host = 'https://rinkeby.etherscan.io/tx/';
+                            break;
+    
+                        case '42':
+                            host = 'https://kovan.etherscan.io/tx/';
+                            break;
+    
+                        default:
+                            host = '';
+                          break;
+                    }
+
+          for (k in transactionsData) {
+            console.log('[updateTransactionsTable()] TxHash: ' + k);
+            myHash = '<a href="' + host + transactionsData[k]["hash"] + '" target="_blank">' + transactionsData[k]["hash"].substring(0, 25) + '...</a>';
+
+            transactionsTable.row.add([ myHash, "", "", "", "", "", "" ]).draw();
+          }
         }
 
         // Profile Events
@@ -667,7 +873,7 @@
           //e.preventDefault();
           
           var tokenQty = TokenSale.props.web3.toBigNumber($('#input-token-quantity').val());
-          var ethQty = tokenQty / tokenPrice;
+          var ethQty = tokenQty * tokenPrice;
 
           //console.log('[Main] ETH Quantity: ' + ethQty.toFixed(4));
           $('#label-eth-qty').html(ethQty.toFixed(6) + ' ETH');
@@ -679,7 +885,7 @@
           e.preventDefault();
 
           var tokenQty = TokenSale.props.web3.toBigNumber($('#input-token-quantity').val());
-          var ethQty = tokenQty / tokenPrice;
+          var ethQty = tokenQty * tokenPrice;
           
           console.log('[Main] Buy ' + tokenQty.toNumber() + ' token with ' + ethQty + ' ETH');
 
@@ -694,24 +900,33 @@
               $('#input-token-quantity').val(0);
               
               var hash = result;
-              // Check for transaction confirmation
-              var waitTimerId = window.setInterval(function () {
-                TokenSale.props.web3.eth.getTransactionReceipt(hash, function (err, result) {
-                  if (result) {
-                    // Transaction is confirmed or rejected
-                    window.clearInterval(waitTimerId);
-                    console.log('[Main] Buy token transaction status...');
-                    console.log(result);
 
-                    updateUI();
-                    $('#box-buy-token').removeClass('running');
-                  } else {
-                    console.log(err);
-                  }
+              // Add new transaction record
+              if (!transactionsData) {
+                transactionsData = new Object();
+                transactionsData["" + 'h' + hash + ""] = {
+                  'hash': hash,
+                  'status': 0,
+                  'titmerId': 0,
+                  'data': null
+                }
+              } else {
+                transactionsData["" + 'h' + hash + ""] = {
+                  'hash': hash,
+                  'status': 0,
+                  'titmerId': 0,
+                  'data': null
+                };
 
-                });
+              }
 
-              }, 2000);
+              var transactionsDataString = JSON.stringify(transactionsData);
+              window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
+
+              transactionsTableAddRow(hash);
+
+              $('#box-buy-token').removeClass('running');
+              monitorPendingTransactions(hash);
 
             }
           });
@@ -738,24 +953,34 @@
               $('#input-transfer-token-quantity').val(0);
               
               var hash = result;
-              // Check for transaction confirmation
-              var waitTimerId = window.setInterval(function () {
-                TokenSale.props.web3.eth.getTransactionReceipt(hash, function (err, result) {
-                  if (result) {
-                    // Transaction is confirmed or rejected
-                    window.clearInterval(waitTimerId);
-                    console.log('[Main] Transfer token transaction status...');
-                    console.log(result);
 
-                    updateUI();
-                    $('#box-transfer-token').removeClass('running');
-                  } else {
-                    console.log(err);
-                  }
+              // Add new transaction record
+              if (!transactionsData) {
+                transactionsData = new Object();
+                transactionsData["" + 'h' + hash + ""] = {
+                  'hash': hash,
+                  'status': 0,
+                  'titmerId': 0,
+                  'data': null
+                }
+              } else {
+                transactionsData["" + 'h' + hash + ""] = {
+                  'hash': hash,
+                  'status': 0,
+                  'titmerId': 0,
+                  'data': null
+                };
 
-                });
+              }
 
-              }, 2000);
+              transactionsTableAddRow(hash);
+
+              var transactionsDataString = JSON.stringify(transactionsData);
+              window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
+
+              $('#box-transfer-token').removeClass('running');
+              monitorPendingTransactions(hash);
+              
 
             }
 
@@ -764,7 +989,20 @@
 
         });
 
+        // Init Data Table
+        transactionsTable = $('#table-transactions').DataTable({
+          'paging'      : true,
+          'lengthChange': false,
+          'searching'   : false,
+          'ordering'    : true,
+          'info'        : true,
+          'autoWidth'   : true,
+          "order": [[ 0, "desc" ]]
+        })        
+        
         // Init IPFS
+        var node = new Ipfs({ repo: String(Math.random() + Date.now()) });
+        
         node.on('ready', function () {
           console.log('IPFS is ready!');
         
@@ -785,6 +1023,15 @@
 
                 updateUI();
                 
+                var transactionsDataString = localStorage.getItem(web3.eth.defaultAccount);
+                transactionsData = JSON.parse(transactionsDataString);
+                if (!transactionsData) {
+                  transactionsData = new Object();
+                }
+
+                console.log('[Main] Local Storage Transaction Data: ' + transactionsDataString);
+                updateTransactionsTable();
+
                 TokenSale.monitorAccountChange(accountChange);
               });
 
@@ -806,6 +1053,13 @@
             console.log('[Main] Result: ' + result);
             console.log('[Main] Token Contract: ' + TokenSale.props.tokenAddress);
             console.log('[Main] Token Sale Contract: ' + TokenSale.props.tokenSaleAddress);
+
+            var transactionsDataString = localStorage.getItem(web3.eth.defaultAccount);
+            transactionsData = JSON.parse(transactionsDataString);
+            
+            console.log('[Main] Local Storage Transaction Data: ' + transactionsDataString);
+            updateTransactionsTable();
+
 
             updateUI();
 
