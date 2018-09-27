@@ -12,5 +12,5 @@ app.use(express.static('www', options));
 
 //app.get('/', (req, res) => res.send('Hello World!'))
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(port, () => console.log(`Token Sale app listening on port ${port}!`));
 

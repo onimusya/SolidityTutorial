@@ -370,6 +370,26 @@ var TokenSale = function () {
             });
         },
 
+        transferToken: function (to, value, callback) {
+            var tsObj = this;
+            var token = value * Math.pow(10, TokenSale.props.tokenInfo.decimals);
+
+            console.log('[TokenSale.transferToken] Token: ' + token);
+
+            this.props.tokenContract.transfer(to, token, function (err, result) {
+                if (err) {
+                    console.log('[TokenSale.transferToken] ' + err);
+                } else {
+                    console.log('[TokenSale.transferToken] Result: ' + result);
+                }
+
+                if (callback) {
+                    callback(err, result);
+                }
+
+            });
+        },        
+
         getEthBalance: function (address, callback) {
             var tsObj = this;
             this.props.web3.eth.getBalance(address, function (err, result) {

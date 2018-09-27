@@ -181,6 +181,7 @@
                 <!-- Left Column-->
                 <div class="col-md-6">
                   
+                  <!-- Profile Information-->
                   <div class="row">
                     <div class="col-md-12">
                         <div class="box box-success">
@@ -205,6 +206,7 @@
                     </div>
                   </div>
 
+                  <!-- Buy Token -->
                   <div class="row">
                     <div class="col-md-12">
 
@@ -246,6 +248,55 @@
                       
                     </div>
                   </div>
+
+                  <!-- Transfer Token -->
+                  <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="box box-primary ld-over" id="box-transfer-token">
+                            <div class="ld ld-ring ld-spin"></div>
+
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Transfer Token</h3>
+        
+                                <div class="box-tools pull-right">                            
+                                    <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                                      <i class="fa fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <form class="box-body form-horizontal">
+
+                              <div class="form-group">
+                                <label for="input-transfer-to-addr" class="col-sm-3 control-label">To Address</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="input-transfer-to-addr" placeholder="0x...">
+                                </div>
+                              </div>
+                        
+                              <div class="form-group">
+                                <label for="input-username" class="col-sm-3 control-label">Token Quantity</label>
+                                  <div class="col-sm-7">
+                                      <input type="number" class="form-control" id="input-transfer-token-quantity" placeholder="Quantity">
+                                  </div>
+                              </div>
+                                                  
+                            </form>  
+
+                            <div class="box-footer">
+                                  <button class="btn btn-info pull-right" id="btn-transfer-token">Transfer</button>
+                            </div>                  
+                            
+                            
+                              
+                        </div>
+        
+                      
+                    </div>
+                  </div>
+
+                  
                 </div>
 
                 <!-- Right Column -->
@@ -665,6 +716,53 @@
 
             }
           });
+        });
+
+        // Transfer Token
+        $(document).on('click', '#btn-transfer-token', function (e) {
+          e.preventDefault();
+
+          var toAddr = $('#input-transfer-to-addr').val();
+          var tokenQty = TokenSale.props.web3.toBigNumber($('#input-transfer-token-quantity').val());
+
+          console.log('[Main] transfer ' + tokenQty.toNumber() + ' token to ' + toAddr);
+
+          $('#box-transfer-token').addClass('running');
+
+          TokenSale.transferToken(toAddr, tokenQty, function (err, result) {
+
+            if (err) {
+              toastr.error(err, 'Transfer Token Error');
+              $('#box-buy-token').removeClass('running');
+            } else {
+              console.log('[Main] Transfer token success, ' + result);
+              $('#input-transfer-token-quantity').val(0);
+              
+              var hash = result;
+              // Check for transaction confirmation
+              var waitTimerId = window.setInterval(function () {
+                TokenSale.props.web3.eth.getTransactionReceipt(hash, function (err, result) {
+                  if (result) {
+                    // Transaction is confirmed or rejected
+                    window.clearInterval(waitTimerId);
+                    console.log('[Main] Transfer token transaction status...');
+                    console.log(result);
+
+                    updateUI();
+                    $('#box-transfer-token').removeClass('running');
+                  } else {
+                    console.log(err);
+                  }
+
+                });
+
+              }, 2000);
+
+            }
+
+          });
+
+
         });
 
         // Init IPFS
