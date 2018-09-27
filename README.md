@@ -3,6 +3,8 @@
 ## 1. Introduction
 First goal of this tutorial is to compile & deploy a mintable ERC20 token smart contract using client side signature & Web3 without truffle. The ERC20 token contract is using Open Zeppelin Framework. It also has sample code to execute smart contract function by using sendRawTransaction().
 
+Here is the demo site for the tutorial: [Smart Contract Demo](https://tokendemo.unwallz.com "Smart Contract Demo")
+
 ## 2. Prerequisite
 - Node.js v8++
 - Npm v5.6++
