@@ -7,7 +7,6 @@ const Web3 = require('web3');
 const browserify = require('browserify');
 
 const Tx = require('ethereumjs-tx');
-//const sleep = require('sleep');
 const SolidityFunction = require('web3/lib/web3/function');
 const appConfig = require('./appconfig');
 const _ = require('lodash');
