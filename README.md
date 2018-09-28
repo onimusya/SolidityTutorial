@@ -3,6 +3,9 @@
 ## 1. Introduction
 First goal of this tutorial is to compile & deploy a mintable ERC20 token smart contract using client side signature & Web3 without truffle. The ERC20 token contract is using Open Zeppelin Framework. It also has sample code to execute smart contract function by using sendRawTransaction().
 
+Then the second part of this tutorial app is allow user to upload their profile photo to IPFS and the hash is stored in the Ethereum Blockchain. When the script detects there is a IPFS hash in the Blockchain, it will retrieve from IPFS and display it as user's profile photo.
+
+
 Here is the demo site for the tutorial: [Smart Contract Demo](https://tokendemo.unwallz.com "Smart Contract Demo")
 
 
