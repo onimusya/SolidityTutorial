@@ -17,7 +17,7 @@ Here is the demo site for the tutorial: [Smart Contract Demo](https://tokendemo.
 - npm install
 
 ## 4. Test the code
-All configuration settings are stored in **appconfig.js**
+Please rename **appconfig.sample.js** to **appconfig.js**. All configuration settings are stored in **appconfig.js**.
 
 ### 4.1 Compile Solidity Code
 `node app.js --build`

@@ -141,7 +141,7 @@
                     <div class="icon">
                       <i class="ion ion-stats-bars"></i>
                     </div>
-                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                    <a href="#" class="small-box-footer" id="token-info-link" target="_blank">More info <i class="fa fa-arrow-circle-right"></i></a>
                   </div>
               </div>
 
@@ -514,6 +514,8 @@
               tokenSaleAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
               tokenAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
               accountAddressTag = '<a href="https://etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+
+              $('#token-info-link').attr('href', 'https://etherscan.io/address/' + TokenSale.props.tokenAddress);
               $('#network-version').html('(mainnet)');
               break;
     
@@ -521,6 +523,7 @@
               tokenSaleAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
               tokenAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
               accountAddressTag = '<a href="https://ropsten.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#token-info-link').attr('href', 'https://ropsten.etherscan.io/address/' + TokenSale.props.tokenAddress);
               $('#network-version').html('(ropsten)');
               break;
     
@@ -528,6 +531,7 @@
               tokenSaleAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
               tokenAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
               accountAddressTag = '<a href="https://rinkeby.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#token-info-link').attr('href', 'https://rinkeby.etherscan.io/address/' + TokenSale.props.tokenAddress);
               $('#network-version').html('(rinkeby)');
               break;
     
@@ -535,6 +539,7 @@
               tokenSaleAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.tokenSaleAddress + '" target="_blank">' + TokenSale.props.tokenSaleAddress + '</a>';
               tokenAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.tokenAddress + '" target="_blank">' + TokenSale.props.tokenAddress + '</a>';
               accountAddressTag = '<a href="https://kovan.etherscan.io/address/' + TokenSale.props.web3.eth.defaultAccount + '" target="_blank">' + accountAddress + '</a>';
+              $('#token-info-link').attr('href', 'https://kovan.etherscan.io/address/' + TokenSale.props.tokenAddress);
               $('#network-version').html('(kovan)');
               break;
 
