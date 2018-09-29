@@ -441,6 +441,7 @@
 
         var transactionsData = {};
         var transactionsTable = null;
+        var pendingTransactionsNode = [];
 
         var profileImageChange = false;
         var defaultProfileImage = 'assets/img/avatar.png';
@@ -478,13 +479,38 @@
                     transactionsData["" + 'h' + hash + ""]['status'] = 1;
                     transactionsData["" + 'h' + hash + ""]['data'] = result;
 
-                    console.log('[Main] Transaction ' + hash + ' is mined');
-                    console.log(result);
+                    console.log('[Main.monitorPendingTransactions] Transaction ' + hash + ' is mined');
+                    //console.log(result);
 
                     // Update the data in local storage
                     var transactionsDataString = JSON.stringify(transactionsData);
                     window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
 
+                    // Find the row in data table and update
+                    var row = transactionsTable.row('#h' + hash);                    
+                    //console.log(row.data());
+
+                    var cell = transactionsTable.cell(row, 6);
+                    //console.log('Cell Data: ');
+                    //console.log(cell.data());
+                    //rowNode = transactionsTable.row.add([ myHash, transactionsData[k]['data'].blockNumber, "", transactionsData[k]['data'].from, transactionsData[k]['data'].to, "", transactionsData[k]['data'].gasUsed ]).draw().node;
+
+                    
+                    if (result.status == 0) {
+                      toastr.error('Transaction ' + hash + ' is failed', 'Transaction Failed!');
+                      cell.data("failed").draw();
+                    } else {
+                      toastr.success('Transaction ' + hash + ' is success', 'Transaction Confirmation');
+                      cell.data(result.gasUsed).draw();
+                    }
+
+                    cell = transactionsTable.cell(row, 1);
+                    cell.data(result.blockNumber).draw();
+                    cell = transactionsTable.cell(row, 3);
+                    cell.data(result.from).draw();
+                    cell = transactionsTable.cell(row, 4);
+                    cell.data(result.to).draw();
+                     
                     updateUI();
                     
                   } else {
@@ -681,13 +707,15 @@
           });
         }
 
+        // When detect change of account, app will retrieve again the token information
         var accountChange = function () {
           TokenSale.retrieveTokenInfo(function (err, result) {
 
             if (err) {
-              console.log('[Main] Error: (Fail to retrieve token info when account change.) ' + err);
+              console.log('[Main.accountChange()] Error: (Fail to retrieve token info when account change.) ' + err);
             } else {
               
+              // Load the transactions data from local storage and polulate to the data table
               var transactionsDataString = localStorage.getItem(web3.eth.defaultAccount);
               transactionsData = JSON.parse(transactionsDataString);
               console.log('[Main] Local Storage Transaction Data: ' + transactionsDataString);
@@ -701,74 +729,120 @@
           
         }
 
+        // Add transaction record into local storage
+        var transactionsDataAdd = function (txHash, type) {
+
+          // Create new transaction data record, later will store into local storage
+          if (!transactionsData) {
+            transactionsData = new Object();
+            transactionsData["" + 'h' + txHash + ""] = {
+              'hash': txHash,
+              'status': 0,
+              'timerId': 0,
+              'type': type,
+              'data': null
+            }
+          } else {
+            transactionsData["" + 'h' + txHash + ""] = {
+              'hash': txHash,
+              'status': 0,
+              'timerId': 0,
+              'type': type,
+              'data': null
+            };
+
+          }
+
+          var transactionsDataString = JSON.stringify(transactionsData);
+          window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
+
+        }
+
+        // Add transaction record into the data table
         var transactionsTableAddRow = function (txHash) {
           var myHash = '';
           var host = '';
-                    switch (web3.version.network) {
-                        case '1':
-                            
-                            host = 'https://etherscan.io/tx/';
-                            break;
+                    
+          switch (web3.version.network) {
+            case '1':                           
+              host = 'https://etherscan.io/tx/';
+              break;
     
-                        case '3':
-                            
-                            host = 'https://ropsten.etherscan.io/tx/';
-                            break;
+            case '3':                            
+              host = 'https://ropsten.etherscan.io/tx/';
+              break;
     
-                        case '4':
-                            host = 'https://rinkeby.etherscan.io/tx/';
-                            break;
+            case '4':
+              host = 'https://rinkeby.etherscan.io/tx/';
+              break;
     
-                        case '42':
-                            host = 'https://kovan.etherscan.io/tx/';
-                            break;
+            case '42':
+              host = 'https://kovan.etherscan.io/tx/';
+              break;
     
-                        default:
-                            host = '';
-                          break;
-                    }
+            default:
+              host = '';
+              break;
+          }
 
-            myHash = '<a href="' + host + txHash + '" target="_blank">' + txHash.substring(0, 25) + '...</a>';
+          myHash = '<a href="' + host + txHash + '" target="_blank">' + txHash.substring(0, 25) + '...</a>';
 
-            transactionsTable.row.add([ myHash, "", "", "", "", "", "" ]).draw();
-
+          var rowNode = transactionsTable.row.add([ myHash, "", "", "", "", "", "waiting" ]).draw().node();
+          
+          $(rowNode).attr('id', 'h' + txHash);
+          
         }
 
         var updateTransactionsTable = function () {
           
-          
-          console.log(transactionsData);
+          //console.log(transactionsData);
           var myHash = '';
           var host = '';
-                    switch (web3.version.network) {
-                        case '1':
-                            
-                            host = 'https://etherscan.io/tx/';
-                            break;
+          var rowNode = null;
+
+          switch (web3.version.network) {
+            case '1':                            
+              host = 'https://etherscan.io/tx/';
+              break;
     
-                        case '3':
-                            
-                            host = 'https://ropsten.etherscan.io/tx/';
-                            break;
+            case '3':                            
+              host = 'https://ropsten.etherscan.io/tx/';
+              break;
     
-                        case '4':
-                            host = 'https://rinkeby.etherscan.io/tx/';
-                            break;
+            case '4':
+              host = 'https://rinkeby.etherscan.io/tx/';
+              break;
     
-                        case '42':
-                            host = 'https://kovan.etherscan.io/tx/';
-                            break;
+            case '42':
+              host = 'https://kovan.etherscan.io/tx/';
+              break;
     
-                        default:
-                            host = '';
-                          break;
-                    }
+            default:
+              host = '';
+              break;
+          }
 
           for (k in transactionsData) {
-            console.log('[updateTransactionsTable()] TxHash: ' + k);
+            console.log('[updateTransactionsTable()] TxHash: ' +  transactionsData[k]["hash"]);
             myHash = '<a href="' + host + transactionsData[k]["hash"] + '" target="_blank">' + transactionsData[k]["hash"].substring(0, 25) + '...</a>';
+            
+            
+            if (transactionsData[k]['data']) {
+              if (transactionsData[k]['data'].status == 0) {
+                rowNode = transactionsTable.row.add([ myHash, transactionsData[k]['data'].blockNumber, "", transactionsData[k]['data'].from, transactionsData[k]['data'].to, "", "failed" ]).draw().node();
+              } else {
+                rowNode = transactionsTable.row.add([ myHash, transactionsData[k]['data'].blockNumber, "", transactionsData[k]['data'].from, transactionsData[k]['data'].to, "", transactionsData[k]['data'].gasUsed ]).draw().node();
+              }
+              
+              $(rowNode).attr('id', 'h' +  transactionsData[k]["hash"]);
+              
+            } else {
+              rowNode = transactionsTable.row.add([ myHash, "", "", "", "", "", "pending" ]).draw().node();
+              $(rowNode).attr('id', 'h' +  transactionsData[k]["hash"]);
+              monitorPendingTransactions( transactionsData[k]["hash"]);
+            }            
 
-            transactionsTable.row.add([ myHash, "", "", "", "", "", "" ]).draw();
+            
           }
         }
 
@@ -885,14 +959,14 @@
 
         });
 
-        // Buy Token
+        // Click on buy token
         $(document).on('click', '#btn-buy-token', function (e) {
           e.preventDefault();
 
           var tokenQty = TokenSale.props.web3.toBigNumber($('#input-token-quantity').val());
           var ethQty = tokenQty * tokenPrice;
           
-          console.log('[Main] Buy ' + tokenQty.toNumber() + ' token with ' + ethQty + ' ETH');
+          console.log('[Main (Buy Token)] Buy ' + tokenQty.toNumber() + ' token with ' + ethQty + ' ETH');
 
           $('#box-buy-token').addClass('running');
 
@@ -900,51 +974,34 @@
             if (err) {
               toastr.error(err, 'Buy Token Error');
               $('#box-buy-token').removeClass('running');
+
             } else {
-              console.log('[Main] Buy token success, ' + result);
+              console.log('[Main (Buy Token)] Transaction Hash: ' + result);
               $('#input-token-quantity').val(0);
-              
+              $('#box-buy-token').removeClass('running');
+
               var hash = result;
 
               // Add new transaction record
-              if (!transactionsData) {
-                transactionsData = new Object();
-                transactionsData["" + 'h' + hash + ""] = {
-                  'hash': hash,
-                  'status': 0,
-                  'titmerId': 0,
-                  'data': null
-                }
-              } else {
-                transactionsData["" + 'h' + hash + ""] = {
-                  'hash': hash,
-                  'status': 0,
-                  'titmerId': 0,
-                  'data': null
-                };
-
-              }
-
-              var transactionsDataString = JSON.stringify(transactionsData);
-              window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
+              transactionsDataAdd(hash, 'token');
 
               transactionsTableAddRow(hash);
-
-              $('#box-buy-token').removeClass('running');
+              
               monitorPendingTransactions(hash);
+
 
             }
           });
         });
 
-        // Transfer Token
+        // Click on Transfer Token
         $(document).on('click', '#btn-transfer-token', function (e) {
           e.preventDefault();
 
           var toAddr = $('#input-transfer-to-addr').val();
           var tokenQty = TokenSale.props.web3.toBigNumber($('#input-transfer-token-quantity').val());
 
-          console.log('[Main] transfer ' + tokenQty.toNumber() + ' token to ' + toAddr);
+          console.log('[Main (Transfer Token)] transfer ' + tokenQty.toNumber() + ' token to ' + toAddr);
 
           $('#box-transfer-token').addClass('running');
 
@@ -954,38 +1011,17 @@
               toastr.error(err, 'Transfer Token Error');
               $('#box-buy-token').removeClass('running');
             } else {
-              console.log('[Main] Transfer token success, ' + result);
+
+              console.log('[Main (Transfer Token)] Transaction Hash: ' + result);
               $('#input-transfer-token-quantity').val(0);
+              $('#box-transfer-token').removeClass('running');              
               
               var hash = result;
 
               // Add new transaction record
-              if (!transactionsData) {
-                transactionsData = new Object();
-                transactionsData["" + 'h' + hash + ""] = {
-                  'hash': hash,
-                  'status': 0,
-                  'titmerId': 0,
-                  'data': null
-                }
-              } else {
-                transactionsData["" + 'h' + hash + ""] = {
-                  'hash': hash,
-                  'status': 0,
-                  'titmerId': 0,
-                  'data': null
-                };
-
-              }
-
+              transactionsDataAdd(hash, 'token');              
               transactionsTableAddRow(hash);
-
-              var transactionsDataString = JSON.stringify(transactionsData);
-              window.localStorage.setItem(TokenSale.props.web3.eth.defaultAccount, transactionsDataString);
-
-              $('#box-transfer-token').removeClass('running');
-              monitorPendingTransactions(hash);
-              
+              monitorPendingTransactions(hash);              
 
             }
 
@@ -1002,6 +1038,7 @@
           'ordering'    : true,
           'info'        : true,
           'autoWidth'   : true,
+          'stateSave'   : true,
           "order": [[ 0, "desc" ]]
         })        
         
