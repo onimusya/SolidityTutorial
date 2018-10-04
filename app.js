@@ -353,15 +353,18 @@ if (typeof argv.deploy !== 'undefined') {
 
     let contracts = appConfig['build']['contracts'];
     contracts.forEach(contract => {
-        let result = deployContract(contract);
-        if (!result) {
-            return;
-        }
 
-        // Update new nonce
-        //nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address);
-        nonce++;
-        nonceHex = web3.toHex(nonce);
+        if (argv.deploy == '*' || argv.deploy == contract) {
+            let result = deployContract(contract);
+            if (!result) {
+                return;
+            }
+    
+            // Update new nonce
+            //nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address);
+            nonce++;
+            nonceHex = web3.toHex(nonce);    
+        }
 
     });
 
@@ -819,4 +822,50 @@ if (typeof argv.bundle !== 'undefined') {
     console.log('JS bundle done.');
     return;
 }
+
+/*
+if (typeof argv.capturetheether !== 'undefined') {
+
+    if (typeof argv.callmechallenge !== 'undefined') {
+        let callMeChallengeSource = 'CallMeChallenge.sol';
+        let jsonCallMeChallengeFilename = path.parse(callMeChallengeSource).name + '.json';
+        let jsonCallMeChallengeFile = './build/contracts/' + jsonCallMeChallengeFilename;
+    
+        let callMeChallengeJsonContent = fs.readFileSync(jsonCallMeChallengeFile, 'utf8');    
+        let callMeChallengeJsonOutput = JSON.parse(callMeChallengeJsonContent);
+    
+        let callMeChallengeAbi = callMeChallengeJsonOutput['contracts'][callMeChallengeSource][path.parse(callMeChallengeSource).name]['abi'];
+        let callMeChallengeAddress = '0x96Cf79D162b0e2BcaefB4BD75236D4531596262e';
+        let callMeChallengeContract = web3.eth.contract(callMeChallengeAbi).at(callMeChallengeAddress);
+    
+        nonce =  web3.eth.getTransactionCount(accounts[selectedAccountIndex].address);
+        nonceHex = web3.toHex(nonce);
+        privateKey = new Buffer(accounts[selectedAccountIndex].key, 'hex'); 
+
+        let solidityFunction = new SolidityFunction('', _.find(callMeChallengeAbi, { name: 'callme' }), '');
+        let payloadData = solidityFunction.toPayload([]).data;
+    
+        let rawTx = {
+            nonce: nonceHex,
+            gasPrice: gasPriceHex,
+            gasLimit: gasLimitHex,
+            to: callMeChallengeAddress,
+            from: accounts[selectedAccountIndex].address,
+            data: payloadData
+        };
+
+        let tx = new Tx(rawTx);
+        tx.sign(privateKey);
+        
+        let serializedTx = tx.serialize();    
+        let receipt = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+        console.log ('Transaction Receipt: ' + receipt);
+
+        return;
+    
+    }
+    return;
+}
+*/
+
 console.log('End here.');
