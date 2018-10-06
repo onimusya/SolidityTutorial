@@ -958,7 +958,8 @@
                     }
                 }
             },
-            "checksum": "67965b3e96d08f65b5bf736fdeca05b0"
+            "checksum": "67965b3e96d08f65b5bf736fdeca05b0",
+            "contractAddress": "0x8cdaf0cd259887258bc13a92c0a6da92698644c0"
         },
         "openzeppelin-solidity/contracts/math/SafeMath.sol": {
             "SafeMath": {
