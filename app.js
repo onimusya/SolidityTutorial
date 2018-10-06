@@ -10,7 +10,7 @@ const Tx = require('ethereumjs-tx');
 const SolidityFunction = require('web3/lib/web3/function');
 const appConfig = require('./appconfig');
 const _ = require('lodash');
-const md5File = require('md5-file')
+const md5File = require('md5-file');
 
 var accounts = appConfig['accounts'];
 var selectedHost = appConfig['networks'][ appConfig['settings']['selectedHost'] ];
