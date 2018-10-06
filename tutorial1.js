@@ -1,4 +1,5 @@
 // Tutorial 1
+// Command Line: node tutorial1.js --build example.sol
 
 // The require packages
 const path = require('path');
